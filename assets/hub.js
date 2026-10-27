@@ -13,8 +13,10 @@
 
   /* ── 이 브라우저에만 남는 진행 체크 ── */
   const SKEY = 'adot-hub-v1';
-  let S = {role:'asst', done:{asst:[], teacher:[]}};
+  let S = {role:'teacher', done:{teacher:[]}};
   try{ const s = JSON.parse(localStorage.getItem(SKEY)||'null'); if(s && s.done) S = Object.assign(S, s); }catch(e){}
+  if(!H.roles[S.role]) S.role = Object.keys(H.roles)[0];   // v3.9: 역할이 하나(강사)뿐
+  if(S.v !== 2){ S.done = {}; S.v = 2; }                     // 단계가 바뀌어 예전 체크는 지움
   const keep = () => { try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} };
 
   /* ── 알림 ── */
@@ -57,7 +59,7 @@
     $$('.seg [data-role]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.role===r)));
     $('#roleLead').textContent = R.lead;
     $('#progBar').style.width = (n ? d/n*100 : 0) + '%';
-    $('#progText').textContent = `${R.name} ${d} / ${n} 완료`;
+    $('#progText').textContent = `${d} / ${n} 단계 완료`;
     $('#progReset').hidden = !d;
     $('#toc').innerHTML = R.steps.map((st,i)=>`<li><a href="#guide" data-step="${i}" class="${isDone(r,i)?'done':''}"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(st.title.replace(/[`*\[\]]/g,''))}</span></a></li>`).join('');
     $('#steps').innerHTML = R.steps.map((st,i)=>stepHTML(r,st,i)).join('');
@@ -96,12 +98,12 @@
   function renderDrawer(){
     if(!drawerFor) return;
     const r = S.role, R = role();
-    $('#drTitle').textContent = `${TOOL_NAME[drawerFor]} · ${R.name} 단계`;
+    $('#drTitle').textContent = `${TOOL_NAME[drawerFor]} 단계`;
     const list = R.steps.map((st,i)=>({st,i})).filter(o=>o.st.go===drawerFor);
     $('#drBody').innerHTML = list.length ? list.map(({st,i})=>{ const d = isDone(r,i); return `<div class="dstep${d?' is-done':''}">
         <div class="dh"><span class="n">${String(i+1).padStart(2,'0')}</span><b>${fmt(st.title)}</b><label class="chk"><input type="checkbox" data-r="${r}" data-i="${i}" ${d?'checked':''}> 했어요</label></div>
         <ul>${st.body.map(b=>`<li>${fmt(b)}</li>`).join('')}</ul></div>`; }).join('') + `<p class="dempty">자세한 설명과 '막히면'은 <a href="#guide">안내</a> 탭에 있습니다.</p>`
-      : `<p class="dempty">${R.name}는 이 화면에서 할 단계가 없습니다. 위에서 역할을 바꿔 보세요.</p>`;
+      : `<p class="dempty">이 화면에서 할 단계가 없습니다.</p>`;
   }
   function openDrawer(k){ drawerFor = k; $('#drawer').hidden = false; document.body.classList.add('dr-open'); renderDrawer(); }
   function closeDrawer(){ drawerFor = null; $('#drawer').hidden = true; document.body.classList.remove('dr-open'); }

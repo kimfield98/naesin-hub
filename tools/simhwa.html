@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.5
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.7
+  (v3.7 · 2026.10.28: 조교 단계 삭제 — 강사가 붙여넣기부터 검수·저장까지 모두 진행. 검수 패널은 ① 데이터 확인 / ② 검수)
+  (v3.6 · 2026.10.28: 문항 번호를 객관1·서답1처럼 같은 크기로 표기, 출처를 한 줄 요약(교과서 · 3과 / 부교재 · 올림포스 / 모의고사 · 26년 3모 36번), 문항 평가는 난이도·킬러 + 특이사항 줄글로 단순화)
   (v3.5 · 2026.10.27: 일람표 지문 열 압축 표기, 고치기 창 칸 너비 조정·긴 정답은 넓은 입력칸)
   (v3.4 · 2026.10.27: 서답형 긴 정답을 카드·일람표에서 따로 표시, [정답 확인]을 카드 위쪽으로 옮기고 검수 패널·일람표에서 바로 이동)
   (v3.3 · 2026.10.27: 문항 카드의 '변형 대조' 표 삭제 — 형광펜과 원문 보기로 대신함)
   (v3.2 · 2026.10.27: 학교 정답표 오류를 강사가 근거와 함께 정정하는 [정답 확인] 기능 추가)
   (v3.1 · 2026.10.27: 공유 지문 근거 표시에서 서답형 번호(**서답1|…**)가 인식되지 않던 문제 수정)
 
-  흐름
-  1. [조교] 브라우저로 열고 [데이터 붙여넣기] → AI가 준 JSON을 넣습니다. (여러 번에 나눠 붙여도 됩니다)
-  2. [조교] 검수 패널 '① 조교 확인'의 ✕를 모두 없애고 [조교 확인 완료] → [저장]
-     → 다운로드 폴더에 새로 생긴 파일을 카톡·드라이브로 강사에게 전달 (처음 연 템플릿 파일은 바뀌지 않음)
-  3. [강사] 받은 파일을 더블클릭해 열거나, 빈 템플릿에서 [파일 불러오기]로 열고 '② 강사 확인'을 해결하며 문항 평가를 확정 → [저장]
-  4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄
+  흐름 (강사 혼자 진행)
+  1. 브라우저로 열고 [데이터 붙여넣기] → AI가 준 JSON을 넣습니다. (여러 번에 나눠 붙여도 됩니다)
+  2. 검수 패널 '① 데이터 확인'의 ✕를 모두 없앱니다. (✕는 AI에게 해당 번호만 다시 요청)
+     일람표의 배점·정답을 학교 정답표와 대조하고 체크칸에 체크
+  3. '② 검수'를 해결합니다: 정답 확인, 출처, 문항 평가(난이도·킬러·특이사항) → 카드마다 '검수 완료'
+  4. [저장] → 다운로드 폴더에 '…_심화분석_검수완료.html' (중간 저장은 '…_작업중.html')
+  5. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄
      기본은 해석 없이 인쇄. 해석까지 인쇄하려면 위쪽 '인쇄에 해석 포함'에 체크
 
   자동 계산(고정 공식, 사람이 고치지 않음)
   - 변형률: 시험 지문 단어 중 '원문에 같은 연속 3단어가 없는 단어'의 비율. 형광펜도 이 계산으로 자동 표시
   - 변형 정도: 없음 5% 미만 · 하 5~25% · 중 25~75% · 상 75% 이상
-  - 난이도 제안: 난이도 요인 0개 하 · 1~2개 중 · 3개 이상 상 (다르게 고르면 이유 필수)
   디자인·계산 코드는 수정하지 않습니다.
 -->
 <html lang="ko">
@@ -61,8 +63,8 @@
   .cards{break-before:page}
   .card{padding:0 0 22px;break-inside:avoid-page}
   .card + .card{border-top:1px dashed var(--line);padding-top:18px}
-  .qhead{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:stretch;border-left:5px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px;break-after:avoid}
-  .qno{font-size:30px;font-weight:800;color:var(--accent);line-height:1;display:flex;align-items:center}
+  .qhead{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:stretch;border-left:5px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px;break-after:avoid}
+  .qno{font-size:21px;font-weight:800;color:var(--accent);line-height:1;display:flex;align-items:center;white-space:nowrap;letter-spacing:-.5px}
   .qno small{font-size:14px;font-weight:700;margin-left:1px}
   .cells{display:grid;grid-template-columns:46px 52px 1fr 92px 96px;gap:4px 14px;align-items:end}
   .cell .k{display:block;font-size:11px;color:var(--faint)}
@@ -104,7 +106,9 @@
   .tags{display:flex;flex-wrap:wrap;gap:4px;flex:1}
   .memo{font-size:13px;line-height:1.6;border-top:1px dotted var(--line);padding-top:7px;min-height:22px;outline:none;white-space:pre-line}
   .memo:focus{border-top-color:var(--accent)}
-  .memo:empty::before{content:'메모를 입력하세요';color:#B4BBC6}
+  .memo:empty::before{content:'학생이 놓치기 쉬운 점, 채점 기준, 수업에서 짚을 점 등을 적어 주세요';color:#B4BBC6}
+  .note-k{font-size:12px;font-weight:700;color:var(--accent);border-top:1px dotted var(--line);padding-top:7px;margin-top:2px}
+  .memo.note{border-top:0;padding-top:3px}
   .status{border-style:dashed;color:#9A6A00;border-color:#D9B44A}
   .status.done{border-style:solid;color:#1F7A4A;border-color:#1F7A4A}
   button:focus-visible,.memo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -122,6 +126,7 @@
     .seg button:not(.on),.tag:not(.on){display:none}
     .seg button.on,.tag.on{cursor:default}
     .memo:empty{display:none}
+    .note-k:has(+ .memo:empty){display:none}
   }
 
   /* v2 추가: 근거 상태·변형 방식·정답 대조·검수 패널 */
@@ -170,7 +175,8 @@
   .card{break-inside:auto}
   .qhead{break-inside:avoid}
   .cells{grid-template-columns:40px 46px 1fr 84px 92px}
-  .cell .v.s{font-size:12.5px;line-height:1.35}
+  .cell .v.s{font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell{min-width:0}
   /* v3.4: 긴 정답(서답형) */
   .cell .v.more{font-size:11.5px;font-weight:600;color:var(--faint)}
   .ansbar{display:flex;gap:10px;align-items:baseline;margin:8px 0 0;padding:6px 10px;border:1px solid #D5DCE5;border-radius:6px;background:#F7F9FB;break-inside:avoid}
@@ -186,7 +192,7 @@
   table.ans td.a{line-height:1.45}
   a.goto{color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
   .card,.q{scroll-margin-top:72px}
-  .qhead{grid-template-columns:auto 1fr} .qno{min-width:52px;white-space:nowrap} .qno small{font-size:12px}
+  .qhead{grid-template-columns:74px 1fr} .qno{white-space:nowrap}
   .acheck + .stem,.ansbar + .stem,.afix + .stem{margin-top:12px}
   .flash{animation:flash 1.6s ease-out}
   @keyframes flash{0%{box-shadow:0 0 0 4px #F5C542}100%{box-shadow:0 0 0 4px transparent}}
@@ -246,7 +252,7 @@
   .eval.locked .seg,.eval.locked .tags,.eval.locked .memo,.eval.locked .status{pointer-events:none;opacity:.55}
   .lock-note{font-size:11.5px;color:#9A6A00;margin:0 0 6px}
 
-  /* 검수 패널: 조교/강사 */
+  /* 검수 패널 */
   .panel .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .panel h3{margin:0 0 6px;font-size:13px;color:var(--accent);display:flex;gap:8px;align-items:baseline}
   .panel h3 small{font-weight:400;color:var(--faint)}
@@ -278,7 +284,6 @@
   <span class="p" id="progress"></span>
   <button type="button" id="btnLoad">파일 불러오기</button><input type="file" id="fileIn" accept=".html,.htm,.json" hidden>
   <button type="button" id="btnPaste">데이터 붙여넣기</button>
-  <button type="button" id="btnAsst">조교 확인 완료</button>
   <button type="button" id="btnSave">저장</button>
   <label class="pko"><input type="checkbox" id="ckKo"> 인쇄에 해석 포함</label>
   <button type="button" class="main" id="btnPrint">인쇄</button>
@@ -329,7 +334,18 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const dash = '<span class="none">—</span>';
-  const isSubj = no => /^서[답술]/.test(no);
+  const isSubj = no => /^(서[답술]|주관)/.test(no);
+  /* v3.6 카드 머리 번호: 객관1 · 서답1 · 주관1 (글자·숫자 같은 크기) */
+  const qTag = no => { const t = String(no).trim(); const m = t.match(/^(서[답술]|주관)[식형]?\s*(.*)$/);
+    return m ? (m[1]==='주관' ? '주관' : '서답') + m[2] : '객관' + t; };
+  /* v3.6 출처 한 줄: 교과서 · 3과 / 부교재 · 올림포스 / 모의고사 · 26년 3모 36번 */
+  function srcLine(s){
+    if(!s) return '—'; const c = s.cat||'미확인', d = String(s.detail||''); let m, x = '';
+    if(c==='교과서'){ if((m=d.match(/(\d+)\s*과/))) x = m[1]+'과'; else if((m=d.match(/lesson\s*(\d+)/i))) x = (+m[1])+'과'; }
+    else if(c==='모의고사'){ m = d.match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/); const n = d.match(/(\d+(?:\s*[~∼-]\s*\d+)?)\s*번/);
+      if(m) x = String(m[1]).slice(-2)+'년 '+(+m[2])+'모'+(n?' '+n[1].replace(/\s+/g,'').replace(/[∼-]/,'~')+'번':''); }
+    else if(c==='부교재'){ const w = d.replace(/^\s*(EBS|ebs)\s*/,'').replace(/[\[(].*$/,'').trim().split(/\s+/)[0]||''; x = w.replace(/[^가-힣A-Za-z0-9]/g,''); }
+    return x ? c+' · '+x : c; }
   const qLabel = no => isSubj(no) ? `서답형 ${String(no).replace(/^서[답술]형?\s*/,'')}` : `${no}번`;
   const hasKo = s => /[가-힣]/.test(s||'');
   const needKo = ch => (ch||[]).length && ch.some(c=>/[A-Za-z]{2,}/.test(c)) && !ch.some(hasKo);
@@ -400,9 +416,9 @@
     
     const st = s && s.status && s.status!=='원문 확인' ? `<span class="st ${s.status==='사용자 지정'?'':'bad'}">${s.status==='사용자 지정'?'지정':'미확인'}</span>` : '';
     return `<tr class="${e.killer?'killer':''}">
-      <td>${esc(qLabel(it.no))}</td><td class="g" title="${it.group?esc('['+it.group+'] 공유 지문'):''}">${it.group?esc(shortGroup(it.group)):''}</td><td>${esc(it.points)}</td><td>${longAns(it.answer)?'<span class="more">아래 표 ↓</span>':esc(it.answer||'')}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}${it.answerFix?'<span class="fxb">정정</span>':''}</td>
+      <td>${esc(qTag(it.no))}</td><td class="g" title="${it.group?esc('['+it.group+'] 공유 지문'):''}">${it.group?esc(shortGroup(it.group)):''}</td><td>${esc(it.points)}</td><td>${longAns(it.answer)?'<span class="more">아래 표 ↓</span>':esc(it.answer||'')}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}${it.answerFix?'<span class="fxb">정정</span>':''}</td>
       <td>${it.type?esc(it.type):dash}</td>
-      <td class="l">${s?st+esc(s.cat+(s.detail?' · '+s.detail:'')):dash}</td>
+      <td class="l" title="${s?esc(s.cat+(s.detail?' · '+s.detail:'')):''}">${s?st+esc(srcLine(s)):dash}</td>
       <td>${v?esc(varText(v)):dash}</td>
       <td>${e.difficulty?esc(e.difficulty):dash}</td>
       <td>${it.eval?(e.killer?'O':'X'):dash}</td></tr>`;
@@ -411,7 +427,7 @@
   function seg(list, on, act, multi, sug){
     return list.map(t => `<button type="button" class="${multi ? ((on||[]).includes(t)?'tag on':'tag') : ((on===t?'on ':'')+(sug===t?'sug':''))}" data-act="${act}" data-v="${esc(t)}">${esc(t)}</button>`).join('');
   }
-  const unlocked = () => D.meta && D.meta.stage === '조교 확인 완료';
+  const unlocked = () => true;   // v3.7: 조교 단계 없음 — 처음부터 강사가 검수
   /* 정답 확인: AI 풀이와 다른 문항은 강사가 '학교 정답 유지' 또는 '정답 정정(근거 필수)'으로 마무리 */
   const shortGroup = g => String(g).replace(/서[답술]형?\s*/g,'서').replace(/\s*,\s*/g,'·');
   const longAns = a => { a = String(a||''); return !/^[①②③④⑤ⓐ-ⓔ,\s]*$/.test(a) && a.length > 8; };
@@ -432,11 +448,11 @@
     const cells = `
       <div class="cell"><span class="k">배점</span><span class="v">${esc(it.points)}</span></div>
       <div class="cell"><span class="k">정답</span><span class="v${longAns(it.answer)?' more':''}">${longAns(it.answer)?'아래 ↓':esc(it.answer)}</span></div>
-      <div class="cell"><span class="k">출처${s&&s.status&&s.status!=='원문 확인'?' · '+esc(s.status):''}</span><span class="v s">${s?esc(s.cat+(s.detail?' · '+s.detail:'')):'—'}</span></div>
+      <div class="cell"><span class="k">출처${s&&s.status&&s.status!=='원문 확인'?' · '+esc(s.status):''}</span><span class="v s" title="${s?esc(s.cat+(s.detail?' · '+s.detail:'')):''}">${esc(srcLine(s))}</span></div>
       <div class="cell"><span class="k">유형</span><span class="v">${esc(it.type||'—')}</span></div>
       <div class="cell"><span class="k">변형률</span><span class="v">${v?`<span class="vchip ${v.rate<5?'x':''}">${esc(varText(v))}</span>`:'—'}</span></div>`;
     const tgt = 'i:'+it.no, ebtn = `<button type="button" class="ebtn" data-eact="edit" data-t="${esc(tgt)}">고치기</button>`;
-    const head = `<header class="qhead">${ebtn}<div class="qno">${isSubj(it.no)?`서답<small>${esc(String(it.no).replace(/^서[답술]형?\s*/,''))}</small>`:esc(it.no)}</div><div class="cells">${cells}</div></header>`;
+    const head = `<header class="qhead">${ebtn}<div class="qno">${esc(qTag(it.no))}</div><div class="cells">${cells}</div></header>`;
     if(!it.stem) return `<div class="q">${head}<div class="pending">문항 데이터 없음</div></div>`;
 
     const orig = origOf(it);
@@ -454,8 +470,7 @@
     if(ac && ((ac.result && ac.result!=='일치') || fx)){
       const info = `정답 대조 · 학교 정답${fx?'표':''} ${esc(fx?fx.school:it.answer)} / AI 풀이 ${esc(ac.ai||'—')} (${esc(ac.result||'—')})${ac.note?' — '+esc(ac.note):''}`;
       const ii = `data-i="${i}"`;
-      if(!unlocked()) acheck = `<div class="acheck scr">${info}<br>→ 조교 확인 완료 후 강사가 [정답 확인]으로 마무리합니다</div>`;
-      else if(ac.decision==='정정' && fx) acheck = `<div class="acheck ok scr">정답 정정 완료 · 학교 정답표 <b>${esc(fx.school)}</b> → <b>${esc(fx.to)}</b><br>근거: ${esc(fx.reason)} (${esc(fx.by)})
+      if(ac.decision==='정정' && fx) acheck = `<div class="acheck ok scr">정답 정정 완료 · 학교 정답표 <b>${esc(fx.school)}</b> → <b>${esc(fx.to)}</b><br>근거: ${esc(fx.reason)} (${esc(fx.by)})
         <div class="ab"><button type="button" data-aact="undo" ${ii}>정정 되돌리기</button></div></div>`;
       else if(ac.decision==='유지') acheck = `<div class="acheck ok scr">${info}<br>→ 강사 확인: 학교 정답 유지 (${esc(ac.by||'강사')})
         <div class="ab"><button type="button" data-aact="reopen" ${ii}>다시 확인</button></div></div>`;
@@ -472,25 +487,19 @@
     /* v3.3: 변형 대조 표 삭제 (형광펜·원문 보기로 대신함). 예전 파일의 contrast 값은 무시 */
     let evalBox = '';
     if(e){
-      const sug = SUGGEST((e.factors||[]).length), off = e.difficulty && e.difficulty!==sug;
       const ai = e.ai, changed = ai && (ai.difficulty!==e.difficulty || ai.killer!==e.killer);
       evalBox = `
       <div class="eval ${unlocked()?'':'locked'}" data-i="${i}">
-        ${unlocked()?'':'<p class="lock-note">조교 확인 완료 후 강사가 평가합니다 (지금은 AI 초안)</p>'}
         <div class="eval-h"><span class="t">문항 평가</span>
           ${changed?`<span class="aidraft">AI 초안: ${esc(ai.difficulty||'—')} · 킬러 ${ai.killer?'O':'X'}</span>`:''}
           <button type="button" class="status ${e.status==='done'?'done':''}" data-act="status">${e.status==='done'?'검수 완료':'검수 전'}</button></div>
-        <div class="row" style="align-items:flex-start"><span class="k">난이도 요인</span>
-          <div class="tags">${seg(LIST.factor, e.factors, 'factor', true)}</div></div>
         <div class="row"><span class="k">난이도</span>
-          <div class="seg">${seg(['상','중','하'], e.difficulty, 'diff', false, sug)}</div>
+          <div class="seg">${seg(['상','중','하'], e.difficulty, 'diff', false)}</div>
           <span class="k" style="margin-left:18px;width:auto">킬러</span>
           <div class="seg">${[['O',true],['X',false]].map(([t,b])=>`<button type="button" class="${e.killer===b?'on':''}" data-act="killer" data-v="${b}">${t}</button>`).join('')}</div>
         </div>
-        ${off?`<div class="row"><span class="k">다르게 고른 이유</span><div class="reason" contenteditable="true" data-act="reason" data-ph="요인 ${(e.factors||[]).length}개 → 제안 '${sug}'. 다르게 고른 이유를 한 줄로 적어 주세요">${esc(e.reason||'')}</div></div>`:''}
-        <div class="row" style="align-items:flex-start"><span class="k">특이사항</span>
-          <div class="tags">${seg(LIST.tag, e.tags, 'tag', true)}</div></div>
-        <div class="memo" contenteditable="true" data-act="memo">${esc(e.memo||'')}</div>
+        <div class="note-k">특이사항</div>
+        <div class="memo note" contenteditable="true" data-act="note">${esc(e.note||'')}</div>
       </div>`;
     }
     const tag = inGroup ? 'div' : 'article';
@@ -524,7 +533,7 @@
   /* ── 검수 패널 (화면 전용) ── */
   function panel(){
     const items = D.items||[], m = D.meta||{}, groups = D.groups||{};
-    const A = [], T = [];                       // A: 조교 확인, T: 강사 확인
+    const A = [], T = [];                       // A: 데이터 확인(AI 결과 형식), T: 검수
     const nos = a => a.map(i=>qLabel(i.no)).join(', ');
     const pts = Math.round(items.reduce((s,i)=>s+(Number(i.points)||0),0)*10)/10;
     A.push([Math.abs(pts-100)<0.05?'ok':'bad', `문항 ${items.length}개 · 배점 합계 ${pts}점${Math.abs(pts-100)<0.05?'':' → 시험지 문항이 다 들어왔는지, 배점이 맞는지 확인'}`]);
@@ -540,8 +549,6 @@
       if(!LIST.cat.includes(s.cat)) A.push(['bad', `${L} 출처 "${esc(s.cat)}"는 목록에 없음`]);
       if(!LIST.status.includes(s.status)) A.push(['bad', `${L} 근거 상태 "${esc(s.status)}"는 목록에 없음`]);
       (it.methods||[]).forEach(x=>{ if(!LIST.method.includes(x)) A.push(['bad', `${L} 변형 방식 "${esc(x)}"는 목록에 없음`]); });
-      if(it.eval){ (it.eval.factors||[]).forEach(f=>{ if(!LIST.factor.includes(f)) A.push(['bad', `${L} 난이도 요인 "${esc(f)}"는 목록에 없음`]); });
-        (it.eval.tags||[]).forEach(t=>{ if(!LIST.tag.includes(t)) A.push(['bad', `${L} 특이사항 "${esc(t)}"는 목록에 없음`]); }); }
       if(s.status==='원문 확인' && !origOf(it)) A.push(['bad', `${L} '원문 확인'인데 원문(original)이 비어 있음`]);
       if(it.box && it.boxKo && !pairs(it.box, it.boxKo)) A.push(['bad', `${L} 보기 상자 ${lines(it.box).length}줄 / 해석 ${lines(it.boxKo).length}줄`]);
       if(it.passage && !pairs(it.passage, it.passageKo)) A.push(['bad', `${L} 지문 ${lines(it.passage).length}줄 / 해석 ${lines(it.passageKo).length}줄 → AI에게 "해석 줄 수를 지문과 맞춰 다시"`]);
@@ -549,7 +556,7 @@
       if(!it.basis) A.push(['bad', `${L} 답 근거가 비어 있음`]);
       if(!marks(it.passage)) A.push(['bad', `${L} 지문의 ** 또는 [[ ]] 짝이 맞지 않음 → AI에게 다시 요청`]);
     });
-    if(A.length===2 && A[0][0]==='ok' && A[1][0]==='ok') A.push(['ok','조교 확인 항목 이상 없음']);
+    if(A.length===2 && A[0][0]==='ok' && A[1][0]==='ok') A.push(['ok','데이터 확인 항목 이상 없음']);
 
     const ans = items.filter(needAns);
     if(ans.length) T.push(['bad', `AI 풀이와 학교 정답이 다르거나 못 푼 문항: ${ans.map(i=>goto(i.no)).join(', ')} → 누르면 그 카드로 이동합니다. 카드 맨 위 상자에서 [학교 정답 유지] 또는 [정답 정정…]`]);
@@ -561,8 +568,6 @@
     if(ext.length) T.push(['bad', `외부지문은 강사가 확인해 '사용자 지정'으로 둡니다: ${nos(ext)}`]);
     const hi = items.filter(i=>{ const v=varOf(i); return v && v.rate>=95; });
     if(hi.length) T.push(['warn', `변형률 95% 이상: ${nos(hi)} → '원문 보기'에서 같은 글이 맞는지 확인`]);
-    const noReason = items.filter(i=>i.eval && i.eval.difficulty && i.eval.difficulty!==SUGGEST((i.eval.factors||[]).length) && !(i.eval.reason||'').trim());
-    if(noReason.length) T.push(['bad', `난이도를 제안과 다르게 골랐는데 이유가 없음: ${nos(noReason)}`]);
     const killers = items.filter(i=>i.eval && i.eval.killer);
     if(killers.length>KILLER_MAX) T.push(['warn', `킬러 ${killers.length}문항(${nos(killers)}) → ${KILLER_MAX}문항을 넘으면 기준을 다시 검토`]);
     const draft = items.filter(i=>i.eval && i.eval.status!=='done');
@@ -571,20 +576,18 @@
     const fx = [...new Set((m.fixes||[]).map(f=>f.target))];
     if(fx.length) T.push(['info', `직접 고친 곳 ${fx.length}곳: ${fx.map(t=>t.startsWith('g:')?'['+t.slice(2)+'] 공유 지문':qLabel(t.slice(2))).join(', ')}`]);
     if(editing) T.unshift(['bad','고치는 중인 카드가 있습니다 → [저장] 또는 [취소]']);
-    if(!T.filter(x=>x[0]!=='info').length) T.push(['ok','강사 확인 항목 이상 없음']);
+    if(!T.filter(x=>x[0]!=='info').length) T.push(['ok','검수 항목 이상 없음']);
 
     const icon = {ok:'✓',bad:'✕',warn:'!',info:'·'};
     const list = a => `<div class="chk">${a.map(([l,t])=>`<span class="i ${l}">${icon[l]}</span><span>${t}</span>`).join('')}</div>`;
     $('panel').innerHTML = `<h2>검수 패널<small>화면에만 보이고 인쇄되지 않습니다</small></h2>
-      <div class="who">조교 <input id="inAsst" value="${esc(m.assistant||'')}" placeholder="이름"> 검수 강사 <input id="inRev" value="${esc(m.reviewer||'')}" placeholder="이름">
-        <span class="stage">단계: ${esc(m.stage||'AI 초안')}</span></div>
+      <div class="who">검수 강사 <input id="inRev" value="${esc(m.reviewer||'')}" placeholder="이름"></div>
       ${m.lastFile?`<p class="saved">마지막 저장 파일: <b>${esc(m.lastFile)}</b> (다운로드 폴더)${dirty?' · <span class="unsaved">저장 후 바뀐 내용 있음</span>':''}</p>`:''}
       <div class="cols">
-        <div><h3>① 조교 확인<small>✕를 모두 없앤 뒤 [조교 확인 완료]</small></h3>${list(A)}
+        <div><h3>① 데이터 확인<small>AI가 준 데이터 · ✕는 AI에게 그 번호만 다시 요청</small></h3>${list(A)}
           <label class="ck"><input type="checkbox" id="ckAns" ${m.answerChecked?'checked':''}> 배점·정답을 학교 정답표와 모두 대조했습니다</label></div>
-        <div><h3>② 강사 확인<small>조교 확인 완료 후</small></h3>${list(T)}</div>
+        <div><h3>② 검수<small>정답 · 출처 · 문항 평가</small></h3>${list(T)}</div>
       </div>`;
-    $('inAsst').onchange = ev => { D.meta.assistant = ev.target.value.trim(); dirty=true; render(); };
     $('inRev').onchange = ev => { D.meta.reviewer = ev.target.value.trim(); dirty=true; render(); };
     $('ckAns').onchange = ev => { D.meta.answerChecked = ev.target.checked; dirty=true; render(); };
     return { a: A.filter(o=>o[0]==='bad').length, t: T.filter(o=>o[0]==='bad').length };
@@ -599,9 +602,8 @@
     const bad = panel();
     document.title = m.school ? `${m.school} ${m.grade} ${m.exam} 심화분석` : '내신 심화분석';
     $('progress').textContent = !items.length ? '데이터를 붙여 넣어 시작하세요' :
-      `문항 ${withCard.length}개 · 조교 확인 남음 ${bad.a} · 강사 확인 남음 ${bad.t} · 검수 완료 ${done}/${withCard.length}`;
+      `문항 ${withCard.length}개 · 데이터 확인 남음 ${bad.a} · 검수 남음 ${bad.t} · 검수 완료 ${done}/${withCard.length}`;
     document.body.classList.toggle('noko', !m.printKo); $('ckKo').checked = !!m.printKo;
-    const bt = $('btnAsst'); bt.style.display = unlocked() ? 'none' : ''; bt.disabled = !items.length || bad.a>0;
     if(!items.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[데이터 붙여넣기]를 눌러 AI가 준 JSON을 넣어 주세요.</div>`; return; }
     app.innerHTML = `
       <table class="frame">
@@ -643,7 +645,7 @@
       e.status = 'done';
     });
   });
-  /* ── 고치기: JSON을 열지 않고 카드 내용을 직접 수정 (강사·조교 공통) ── */
+  /* ── 고치기: JSON을 열지 않고 카드 내용을 직접 수정  ── */
   const lines2 = a => (a||[]).join('\n');
   const opt = (list, v) => list.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('') + (v && !list.includes(v) ? `<option selected>${esc(v)}</option>` : '');
   const ta = (f, v, ph, rows) => `<textarea data-f="${f}" rows="${rows||3}" placeholder="${esc(ph||'')}" spellcheck="false">${esc(v||'')}</textarea>`;
@@ -696,7 +698,7 @@
       if(o.box==='') { delete o.box; delete o.boxKo; }
     }
     if(changed.length){ D.meta.fixes = D.meta.fixes||[];
-      D.meta.fixes.push({target, fields:changed, at:new Date().toISOString(), by: unlocked() ? (D.meta.reviewer||'강사') : (D.meta.assistant||'조교')}); dirty = true; }
+      D.meta.fixes.push({target, fields:changed, at:new Date().toISOString(), by: D.meta.reviewer||'강사'}); dirty = true; }
   }
   app.addEventListener('click', ev => {
     const b = ev.target.closest('button[data-eact]'); if(!b) return;
@@ -707,7 +709,7 @@
     render(); window.scrollTo(0,y);
   });
   app.addEventListener('focusout', ev => {
-    const act = ev.target.dataset && ev.target.dataset.act; if(act!=='memo' && act!=='reason') return;
+    const act = ev.target.dataset && ev.target.dataset.act; if(act!=='memo' && act!=='reason' && act!=='note') return;
     const e = D.items[+ev.target.closest('.eval').dataset.i].eval, t = ev.target.innerText.trim();
     if(t !== (e[act]||'').trim()) keep(() => { e[act] = t; e.status = 'done'; });
   });
@@ -762,11 +764,6 @@
     }catch(e){ $('dlgMsg').textContent = '읽을 수 없는 JSON입니다: ' + e.message; }
   };
 
-  $('btnAsst').onclick = () => {
-    if(!D.meta.assistant){ const n = prompt('조교 이름을 적어 주세요'); if(!n) return; D.meta.assistant = n.trim(); }
-    if(!confirm('조교 확인을 완료하고 강사에게 넘길까요?\n완료 후 [저장]한 파일을 강사에게 전달하세요.')) return;
-    D.meta.stage = '조교 확인 완료'; dirty = true; render();
-  };
   $('ckKo').onchange = ev => { D.meta.printKo = ev.target.checked; dirty = true; render(); };
   $('btnPrint').onclick = () => window.print();
   $('btnSave').onclick = () => {
@@ -778,12 +775,12 @@
     clone.querySelector('#data').textContent = '\n' + JSON.stringify(D, null, 1).replace(/<\//g,'<\\/') + '\n';
     const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html'});
     const url = URL.createObjectURL(blob), link = document.createElement('a'), m = D.meta;
-    const stage = m.stage==='조교 확인 완료' ? (D.items.every(i=>!i.eval||i.eval.status==='done') ? '검수완료' : '강사검수중') : '조교작업중';
+    const stage = D.items.length && D.items.every(i=>!i.eval||i.eval.status==='done') ? '검수완료' : '작업중';
     link.href = url; link.download = [m.school,m.grade,m.exam].filter(Boolean).join('_').replace(/\s+/g,'_') + `_심화분석_${stage}.html`;
     document.body.appendChild(link); link.click(); link.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 1000); dirty = false;
     D.meta.lastFile = link.download; autosave(); render();
-    alert(`저장했습니다: ${link.download}\n\n· 이 파일은 컴퓨터의 '다운로드' 폴더에 새로 생깁니다. 처음 연 템플릿 파일은 바뀌지 않습니다.\n· 강사에게 넘길 때는 이 파일을 카톡·구글 드라이브 등으로 보내 주세요.\n· 받은 사람은 이 파일을 더블클릭해 열거나, 빈 템플릿에서 [파일 불러오기]로 엽니다.`);
+    alert(`저장했습니다: ${link.download}\n\n· 이 파일은 컴퓨터의 '다운로드' 폴더에 새로 생깁니다. 처음 연 템플릿 파일은 바뀌지 않습니다.\n· 이어서 작업할 때는 이 파일을 더블클릭해 열거나, 빈 화면에서 [파일 불러오기]로 엽니다.\n· 파일 이름이 '검수완료'이면 경향분석지에서 불러올 수 있습니다.`);
   };
   /* 자동 보관: 같은 컴퓨터·같은 브라우저에서 창을 닫았다 다시 열 때 이어서 작업 */
   const AKEY = 'adot-simhwa-v3';

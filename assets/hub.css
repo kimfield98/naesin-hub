@@ -88,6 +88,7 @@ code.file{font-family:var(--f-mono);font-size:.84em;background:var(--soft);borde
 .flow li:not(:last-child)::after{content:"";position:absolute;right:-7px;top:50%;width:12px;height:12px;background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);transform:translateY(-50%) rotate(45deg);z-index:1}
 .flow .who{font-size:12px;font-weight:700;color:var(--navy)}
 .flow .what{font-size:14px;color:var(--sub)}
+.flow .what.sm{font-size:12.5px;color:var(--faint)}
 .flow code.file{align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:760px){ .flow{grid-template-columns:1fr} .flow li{border-right:0;border-bottom:1px solid var(--line)} .flow li:last-child{border-bottom:0} .flow li:not(:last-child)::after{right:auto;left:24px;top:auto;bottom:-7px;transform:rotate(135deg)} }
 

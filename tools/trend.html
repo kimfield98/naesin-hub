@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.5
-  (2026.10.27 · 심화분석지 템플릿 v3.5와 짝으로 사용)
+  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.9
+  (v3.9 · 2026.10.28: 조교 단계 삭제에 맞춰 '조교 확인 전' 경고 삭제 · 심화분석지 v3.7과 짝)
+  (v3.8 · 2026.10.28: 객관식 정답 분포 삭제, 총평을 등급컷(1·2등급+한 줄 평)·특징·대비법(각각 요약/객관식/주관식)으로 개편)
+  (v3.7 · 2026.10.28: 문항 지도 삭제, '강사 총평' → '총평', 총평에 등급컷(1~4등급 최저 점수) 칸 추가)
+  (v3.6 · 2026.10.28 · 표본 디자인 적용: 상단 띠·요약 카드·번호 섹션·도넛 그래프 / 심화분석지 템플릿 v3.5와 짝으로 사용)
+  (v3.5 · 2026.10.27: 심화분석지 v3.5 불러오기로 자동 채움)
 
   흐름
   1. [강사] 심화분석지 검수를 마치고 [저장] → '…_심화분석_검수완료.html'
   2. [강사] 이 파일을 브라우저로 열고 [심화분석지 불러오기] → 위 파일 선택 (화면에 끌어다 놓아도 됨)
-     → 출처·유형·변형·난이도·킬러·문항 지도가 자동으로 채워집니다. 따로 AI 작업이 없습니다.
-  3. [강사] '출제 경향 총평', '다음 시험 대비 포인트' 두 칸만 직접 씁니다. → [저장]
+     → 출처·유형·변형·난이도·킬러가 자동으로 채워집니다. 따로 AI 작업이 없습니다.
+  3. [강사] '한 줄 요약'(자동 문장, 고쳐 써도 됨), 총평의 등급컷과 특징·대비법(요약 한 줄, 객관식, 주관식)을 씁니다. → [저장]
      → 다운로드 폴더에 '…_경향분석.html'이 생깁니다.
-  4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄 (보통 1쪽, 넘치면 뒷면으로 이어짐)
+  4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄 (보통 2쪽, 양면 인쇄 기준)
 
   자동 계산(심화분석지와 같은 고정 공식, 사람이 고치지 않음)
   - 변형률: 시험 지문 단어 중 '원문에 같은 연속 3단어가 없는 단어'의 비율
@@ -22,99 +26,101 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내신 경향분석</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
 <style>
   /* ───────── 고정 디자인: 작업자는 이 부분을 수정하지 않습니다 ───────── */
-  :root{ --accent:#1E3A5F; --line:#C9D2DD; --ink:#1A1F2B; --sub:#4A5260; --faint:#7A8392; --track:#E6EAF0;
-         --lv0:#C9D2DD; --lv1:#9DB8D6; --lv2:#4F78A8; --lv3:#1E3A5F; }
+  :root{ --navy:#1B2B4B; --blue:#2B5CA8; --ink:#1A2233; --sub:#5B6676; --faint:#8A93A1; --line:#D9DFE7; --card:#EEF3FA; --track:#E7ECF2;
+         --c1:#2B5CA8; --c2:#1C2E52; --c3:#4A9A9B; --c4:#7FA9D8; --c5:#8E96C2; --c6:#BFC8D8; }
   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4;margin:0}
   html,body{margin:0;background:#E6E9EE}
   body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);font-size:12.5px;line-height:1.5;word-break:keep-all}
   .sheet{width:794px;margin:24px auto;background:#fff;padding:0 46px}
 
+  /* 매 쪽 반복되는 머리글·바닥글 */
   table.frame{width:100%;border-collapse:collapse}
-  table.frame > thead td{height:15mm;vertical-align:bottom;padding:0 0 3mm}
-  table.frame > tfoot td{height:11mm}
-  .run{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line);padding-bottom:5px}
-  .run b{color:var(--accent);font-weight:700}
+  table.frame > thead td{padding:0}
+  .topbar{height:0;border-top:6px solid var(--navy);margin:0 -46px}
+  .run{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);padding:12px 0 0;height:15mm}
+  table.frame > tfoot td{height:14mm;vertical-align:bottom;padding:0 0 7mm}
+  .foot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);border-top:1px solid var(--line);padding-top:6px}
 
-  .cover h1{margin:4px 0 2px;font-size:23px;font-weight:800;letter-spacing:-.5px}
-  .cover .range{margin:0 0 8px;font-size:12px;color:var(--sub)}
-  .cover .bar{height:0;border-top:3px solid var(--accent)}
+  /* 표지 */
+  .cover h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--navy);line-height:1.25}
+  .cover .sub{margin:4px 0 0;font-size:12.5px;color:var(--sub)}
+  .cover .range{margin:2px 0 0;font-size:11px;color:var(--faint)}
+  .cover .rule{height:0;border-top:1.5px solid var(--navy);margin-top:12px}
 
-  /* 핵심 지표 */
-  .kpis{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}
-  .kpi{padding:7px 8px 7px;border-right:1px solid #E3E8EE}
-  .kpi:last-child{border-right:0}
-  .kpi .k{display:block;font-size:10.5px;color:var(--faint)}
-  .kpi .v{display:block;font-size:15px;font-weight:800;color:var(--accent);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .kpi .s{display:block;font-size:10.5px;color:var(--sub);line-height:1.35}
+  /* 요약 카드 */
+  .sum{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border:1px solid #E1E8F2;border-radius:8px;margin-top:14px;padding:11px 0}
+  .sum > div{text-align:center;padding:0 10px}
+  .sum > div + div{border-left:1px solid #CFD8E5}
+  .sum .k{display:block;font-size:11.5px;color:var(--sub)}
+  .sum .v{display:block;font-size:24px;font-weight:800;color:var(--navy);line-height:1.3;letter-spacing:-.4px}
+  .sum .s{display:block;font-size:11px;color:var(--sub)}
+  .headline{margin:12px 0 0;font-size:14px;font-weight:700;color:var(--navy);outline:none;border-radius:3px}
+  .headline:focus{box-shadow:0 0 0 2px #C9D7EC}
 
-  /* 상자 */
-  .row3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;margin-top:12px}
-  .row2{display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin-top:12px}
-  .box{break-inside:avoid}
-  .box h3{margin:0 0 6px;font-size:12.5px;color:var(--accent);border-bottom:1.5px solid var(--accent);padding-bottom:3px;display:flex;justify-content:space-between;align-items:baseline}
-  .box h3 small{font-weight:400;font-size:10.5px;color:var(--faint)}
+  /* 번호 섹션 */
+  .sec{margin-top:18px;break-inside:avoid}
+  .sh{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .sh .n{font-size:16px;font-weight:700;color:var(--blue)}
+  .sh h2{margin:0;font-size:18px;font-weight:700;color:var(--navy);letter-spacing:-.3px}
+  .sh small{margin-left:auto;font-size:10.5px;color:var(--faint)}
+  .sb{display:grid;grid-template-columns:168px 1fr;gap:32px;align-items:start;padding-top:10px}
 
-  /* 막대: 배경 그래픽 설정이 꺼져 있어도 인쇄되도록 테두리로 그림 */
-  .track{position:relative;display:block;height:0;border-top:7px solid var(--track)}
-  .fill{position:absolute;left:0;top:-7px;height:0;border-top:7px solid var(--accent)}
-  .brow{display:grid;grid-template-columns:60px 1fr 78px;gap:6px;align-items:center;font-size:11.5px;min-height:18px}
-  .brow .bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .brow .bv{text-align:right;color:var(--sub);white-space:nowrap;font-size:11px}
-  .brow .bv b{color:var(--ink)}
+  /* 도넛 */
+  .donut{position:relative;width:168px;height:168px}
+  .donut svg{display:block;width:168px;height:168px}
+  .donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .donut .c .l{font-size:11px;color:var(--sub);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .donut .c .p{font-size:26px;font-weight:800;color:var(--navy);line-height:1.15;letter-spacing:-.5px}
+  .donut .c .r{font-size:10.5px;color:var(--sub)}
 
-  /* 출처 표 */
-  .srow{display:grid;grid-template-columns:52px 1fr 30px 66px 44px;gap:6px;align-items:center;font-size:11.5px;min-height:19px}
-  .srow.h{font-size:10px;color:var(--faint);min-height:14px}
-  .srow .n,.srow .p,.srow .r{text-align:right;white-space:nowrap}
-  .srow .p{color:var(--sub);font-size:11px}
-  .srow .r{font-size:11px}
-  .srow b{font-weight:700}
-  .units{margin-top:6px;border-top:1px dotted var(--line);padding-top:4px;font-size:10.5px;color:var(--sub);line-height:1.5}
-  .units div{margin:1px 0}
-  .units b{color:var(--ink);margin-right:3px}
-  .units .bk{color:var(--faint)}
-  .note{font-size:10.5px;color:var(--faint);margin-top:4px}
+  /* 범례 표 */
+  .lg{width:100%;border-collapse:collapse}
+  .lg th{font-size:10.5px;font-weight:400;color:var(--faint);text-align:left;padding:0 0 6px}
+  .lg th.r,.lg td.r{text-align:right}
+  .lg td{font-size:12.5px;padding:4px 0;vertical-align:middle}
+  .lg td.r{font-size:12px;color:var(--sub);white-space:nowrap}
+  .lg td.pc{font-size:14.5px;font-weight:800;color:var(--navy);text-align:right;width:62px;white-space:nowrap}
+  .sw{display:inline-block;width:0;height:0;border:5.5px solid;border-radius:2px;vertical-align:-1px;margin-right:12px}
+  .det{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .det .dh{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:3px}
+  .det .row{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--sub);line-height:1.6}
+  .det .row span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .det .row span:last-child{white-space:nowrap}
+  .det .row b{color:var(--ink);font-weight:700}
+  .note{font-size:10.5px;color:var(--faint);line-height:1.6}
+  .chips{display:flex;flex-wrap:wrap;gap:4px 5px;margin-top:3px}
+  .chip{border:1px solid var(--line);border-radius:3px;padding:0 6px;font-size:10.5px;color:var(--sub);white-space:nowrap}
+  .chip b{color:var(--blue)}
+  .star{color:var(--navy);font-weight:800}
 
-  /* 변형 방식 */
-  .chips{display:flex;flex-wrap:wrap;gap:3px 4px;margin-top:6px}
-  .chip{border:1px solid var(--line);border-radius:3px;padding:0 5px;font-size:10.5px;color:var(--sub);white-space:nowrap}
-  .chip b{color:var(--accent)}
-  .sub-k{font-size:10.5px;color:var(--faint);margin-top:6px}
-
-  /* 문항 지도 */
-  .mapbox{margin-top:12px;break-inside:avoid}
-  .legend{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:10.5px;color:var(--sub);margin:0 0 5px}
-  .sw{display:inline-block;width:12px;height:0;border-top:8px solid;vertical-align:1px;margin-right:3px}
-  .map{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
-  .tile{border:1px solid var(--line);border-left:5px solid var(--lv0);border-radius:3px;padding:2px 4px 2px 5px;font-size:10.5px;line-height:1.32;min-width:0}
-  .tile > div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tile .t1{display:flex;justify-content:space-between;align-items:baseline}
-  .tile .t1 b{font-size:13px;color:var(--accent)}
-  .tile .t1 small{font-size:9.5px;color:var(--faint)}
-  .tile .src{color:var(--sub)}
-  .tile .t4{display:flex;justify-content:space-between;align-items:center}
-  .tile .df{border:1px solid var(--line);border-radius:2px;padding:0 3px;font-size:9.5px;line-height:1.35}
-  .tile .df.h{border-color:var(--ink);font-weight:700}
-  .tile.k{border-color:var(--ink);border-width:1.5px;border-left-width:5px}
-  .tile.lv1{border-left-color:var(--lv1)} .tile.lv2{border-left-color:var(--lv2)} .tile.lv3{border-left-color:var(--lv3)}
-  .tile.lvx{border-left-style:dashed;border-left-color:#A0A7B2}
-  .star{color:var(--ink);font-weight:700}
-
-  /* 난이도 상자 */
-  .klist{margin-top:6px;font-size:11px;line-height:1.5}
-  .klist div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ans{margin-top:6px;font-size:11px;color:var(--sub);border-top:1px dotted var(--line);padding-top:4px}
-  .ans b{color:var(--ink);font-weight:700;margin:0 6px 0 1px}
-
-  /* 강사 총평 */
-  .cm + .cm{margin-top:8px}
-  .ch{font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:2px}
-  .ce{font-size:12.5px;line-height:1.6;min-height:44px;border:1px dashed var(--line);border-radius:4px;padding:4px 7px;outline:none;white-space:pre-line}
-  .ce:focus{border-color:var(--accent);border-style:solid}
-  .ce:empty::before{content:attr(data-ph);color:#A9B0BB}
+  /* 총평 */
+  .cutband{display:grid;grid-template-columns:auto auto 1fr;align-items:center;background:var(--card);border:1px solid #E1E8F2;border-radius:8px;margin-top:12px;padding:10px 0}
+  .cutband > div{padding:0 22px}
+  .cutband > div + div{border-left:1px solid #CFD8E5}
+  .cutband .lab{font-size:14px;font-weight:700;color:var(--navy)}
+  .cutband .gs{display:flex;gap:30px;align-items:baseline}
+  .cutband .g{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+  .cutband .g small{font-size:12px;color:var(--sub)}
+  .cutv{display:inline-block;min-width:34px;text-align:center;font-size:26px;font-weight:800;color:var(--navy);line-height:1.15;outline:none;border-bottom:1px dashed transparent}
+  .cutv:focus{border-bottom-color:var(--blue)}
+  .cutv:empty::before{content:"—";color:#B4BBC6;font-weight:400}
+  .cutband .g .u{font-size:12px;color:var(--sub)}
+  .cutnote{font-size:12.5px;color:var(--ink);outline:none;min-height:18px}
+  .cutnote:empty::before{content:attr(data-ph);color:#A9B0BB}
+  .rv{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+  .rbox{border:1px solid #DCE3EE;border-radius:8px;overflow:hidden;break-inside:avoid}
+  .rbox .rh{background:var(--card);padding:8px 16px;font-size:14px;font-weight:700;color:var(--navy);border-bottom:1px solid #E6ECF4}
+  .rbox .rb{padding:10px 16px 12px;background:#FAFBFE}
+  .rbox .lead{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .rbox .lb{font-size:11.5px;font-weight:700;color:var(--blue);margin-top:8px}
+  .ce{font-size:12px;line-height:1.65;min-height:20px;border:1px dashed var(--line);border-radius:4px;padding:3px 6px;outline:none;white-space:pre-line;text-align:justify}
+  .ce.lead{min-height:0}
+  .ce:focus{border-color:var(--blue);border-style:solid}
+  .ce:empty::before{content:attr(data-ph);color:#A9B0BB;font-weight:400}
   .blank{display:none}
   .warnp{font-size:10.5px;color:#9A6A00;margin-top:8px}
 
@@ -122,10 +128,10 @@
   .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px}
   .toolbar .p{margin-right:auto}
   .toolbar button{font:inherit;font-size:13px;border:1px solid #fff;background:transparent;color:#fff;border-radius:5px;padding:4px 12px;cursor:pointer}
-  .toolbar button.main{background:#fff;color:var(--accent);font-weight:700}
+  .toolbar button.main{background:#fff;color:#1E3A5F;font-weight:700}
   .toolbar button:disabled{opacity:.4;cursor:not-allowed}
   .panel{width:794px;margin:18px auto 0;background:#fff;border-radius:8px;padding:14px 18px;font-size:13px;border:1px solid var(--line)}
-  .panel h2{margin:0 0 8px;font-size:14px;color:var(--accent)}
+  .panel h2{margin:0 0 8px;font-size:14px;color:#1E3A5F}
   .panel h2 small{font-weight:400;color:var(--faint);margin-left:6px}
   .panel .saved{margin:0 0 8px;font-size:12px;color:var(--sub)} .panel .unsaved{color:#B42318;font-weight:700}
   .chk{display:grid;grid-template-columns:22px 1fr;gap:2px 6px;line-height:1.55}
@@ -133,20 +139,26 @@
   .chk .ok{color:#1F7A4A} .chk .warn{color:#9A6A00} .chk .bad{color:#B42318} .chk .info{color:var(--faint)}
   .empty{padding:60px 0;text-align:center;color:var(--faint);font-size:14px;line-height:1.8}
   .drop{outline:3px dashed #F5C542;outline-offset:-10px}
+  .edit-hint{font-size:10.5px;color:var(--faint);font-weight:400;margin-left:8px}
 
   @media print{
     html,body{background:#fff}
-    .toolbar,.panel{display:none!important}
+    .toolbar,.panel,.edit-hint{display:none!important}
     .sheet{width:auto;margin:0;padding:0 13mm}
-    .ce{border:0;padding:0 0 2px;min-height:0}
+    .topbar{margin:0 -13mm}
+    .ce{border:0;padding:0;min-height:0}
     .ce:empty{display:none}
+    .cutv:empty::before,.cutnote:empty::before{content:''}
+    .cutv:empty{min-width:46px;border-bottom:1px solid #9AA3AF;height:24px}
+    .rbox .rb{background:#fff}
     .ce:empty + .blank{display:block}
     .blank i{display:block;height:7mm;border-bottom:1px dotted #9AA3AF}
   }
-  @media screen and (max-width:860px){ .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} .row3,.row2{grid-template-columns:1fr} .map{grid-template-columns:repeat(5,1fr)} .kpis{grid-template-columns:repeat(3,1fr)} }
+  @media screen and (max-width:860px){ .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} .sb{grid-template-columns:1fr;justify-items:center} .sb > :last-child{width:100%} .rv{grid-template-columns:1fr} .cutband{grid-template-columns:1fr} .cutband > div + div{border-left:0;border-top:1px solid #CFD8E5;padding-top:8px;margin-top:8px} .topbar{margin:0 -46px} }
 </style>
 </head>
 <body>
+
 
 <div class="toolbar">
   <span class="p" id="progress"></span>
@@ -235,12 +247,30 @@
     return [...m.values()].sort((a,b)=> b.n-a.n || b.pts-a.pts); }
   const avgRate = rows => { const v = rows.filter(r=>r.v); return v.length ? Math.round(v.reduce((s,r)=>s+r.v.rate,0)/v.length) : null; };
   const top = list => { if(!list.length) return null; const t = list.filter(o=>o.n===list[0].n && r1(o.pts)===r1(list[0].pts)); return t; };
-  const bar = (pct, color) => `<span class="track"><span class="fill" style="width:${Math.max(0,Math.min(100,pct))}%${color?';border-top-color:'+color:''}"></span></span>`;
+
+  const PAL = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+  const LV_COLOR = {'상':'var(--c2)','중':'var(--c1)','하':'var(--c4)','없음':'var(--c6)'};
+  const DF_COLOR = {'상':'var(--c2)','중':'var(--c1)','하':'var(--c4)'};
+  const pctS = (a,b) => b ? (Math.round(a/b*1000)/10).toFixed(1)+'%' : '0%';
+
+  /* 도넛: 배경 그래픽 설정과 관계없이 인쇄되도록 SVG 선으로 그림 */
+  function donut(parts, total, center){
+    const R = 80, C = 2*Math.PI*R, W = 34; let off = 0;
+    const segs = parts.filter(p=>p.n>0).map(p=>{ const len = total ? p.n/total*C : 0;
+      const s = `<circle r="${R}" cx="100" cy="100" fill="none" stroke="${p.color}" stroke-width="${W}" stroke-dasharray="${Math.max(0,len-1.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"/>`;
+      off += len; return s; }).join('');
+    return `<div class="donut"><svg viewBox="0 0 200 200" aria-hidden="true"><circle r="${R}" cx="100" cy="100" fill="none" stroke="var(--track)" stroke-width="${W}"/>${segs}</svg>
+      <div class="c"><span class="l">${esc(center.l)}</span><span class="p">${esc(center.p)}</span><span class="r">${esc(center.r)}</span></div></div>`;
+  }
+  const sec = (n, title, note, body) => `<section class="sec"><div class="sh"><span class="n">${n} /</span><h2>${title}</h2><small>${esc(note)}</small></div>${body}</section>`;
+  const lgRow = (color, name, mid, pc) => `<tr><td><i class="sw" style="border-color:${color}"></i>${name}</td><td class="r">${mid}</td><td class="pc">${pc}</td></tr>`;
+  const lgHead = (a,b,c) => `<tr><th style="padding-left:23px">${a}</th><th class="r">${b}</th><th class="r">${c}</th></tr>`;
 
   /* ── 화면 그리기 ── */
   function render(){
     if(dirty) autosave();
     D.meta = D.meta||{}; D.items = D.items||[]; const m = D.meta, T = m.trend = m.trend||{};
+    if(T.overall && !T.featObj){ T.featObj = T.overall; delete T.overall; } if(T.prep && !T.prepObj){ T.prepObj = T.prep; delete T.prep; }
     const rows = rowsOf(), bad = panel(rows);
     document.title = m.school ? `${m.school} ${m.grade} ${m.exam} 경향분석` : '내신 경향분석';
     $('progress').textContent = !rows.length ? '심화분석지 저장 파일을 불러와 시작하세요' :
@@ -248,111 +278,112 @@
     $('btnSave').disabled = !rows.length;
     if(!rows.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[심화분석지 불러오기]를 눌러 강사 검수를 마친 심화분석지 파일<br>(…_심화분석_검수완료.html)을 고르거나, 이 화면에 끌어다 놓으세요.</div>`; return; }
 
-    const total = r1(rows.reduce((s,r)=>s+r.pts,0));
+    const N = rows.length, total = r1(rows.reduce((s,r)=>s+r.pts,0));
     const subj = rows.filter(r=>isSubj(r.no)), obj = rows.filter(r=>!isSubj(r.no));
+    const sumPts = rs => r1(rs.reduce((s,r)=>s+r.pts,0));
+    const pctOf = p => total ? Math.round(p/total*100) : 0;
     const byCat = agg(rows, r=>r.cat), byType = agg(rows, r=>r.type);
     const withV = rows.filter(r=>r.v), avg = avgRate(rows);
-    const lvCount = L => rows.filter(r=>r.v && r.v.level===L);
     const killers = rows.filter(r=>r.killer);
-    const diffs = ['상','중','하'].map(d=>({d, rs:rows.filter(r=>r.diff===d)}));
     const draft = rows.filter(r=>!r.done).length;
-    const pctOf = p => total ? Math.round(p/total*100) : 0;
 
-    /* 핵심 지표 */
-    const tc = top(byCat), tt = top(byType);
-    const kpis = `<div class="kpis">
-      <div class="kpi"><span class="k">문항 구성</span><span class="v">${rows.length}문항</span><span class="s">객관식 ${obj.length} · 서답 ${subj.length}<br>배점 ${total}점</span></div>
-      <div class="kpi"><span class="k">최다 출처</span><span class="v">${esc(tc.map(o=>o.k).join('·'))}</span><span class="s">${tc[0].n}문항 · ${r1(tc[0].pts)}점<br>배점의 ${pctOf(tc[0].pts)}%</span></div>
-      <div class="kpi"><span class="k">최다 유형</span><span class="v">${esc(tt.slice(0,2).map(o=>o.k).join('·'))}</span><span class="s">${tt[0].n}문항 · ${r1(tt[0].pts)}점<br>유형 ${byType.length}가지 출제</span></div>
-      <div class="kpi"><span class="k">평균 변형률</span><span class="v">${avg==null?'—':esc(LEVEL(avg)+' '+avg+'%')}</span><span class="s">상 ${lvCount('상').length} · 중 ${lvCount('중').length} · 하 ${lvCount('하').length}<br>없음 ${lvCount('없음').length}${rows.length-withV.length?` · 원문 없음 ${rows.length-withV.length}`:''}</span></div>
-      <div class="kpi"><span class="k">난이도</span><span class="v">상 ${diffs[0].rs.length} · 중 ${diffs[1].rs.length} · 하 ${diffs[2].rs.length}</span><span class="s">고난도(상) 배점<br>${r1(diffs[0].rs.reduce((s,r)=>s+r.pts,0))}점</span></div>
-      <div class="kpi"><span class="k">킬러</span><span class="v">${killers.length}문항</span><span class="s">${killers.length?esc(killers.map(r=>qLabel(r.no)).join(', ')):'없음'}</span></div>
-    </div>`;
+    /* 요약 카드 + 한 줄 요약 */
+    const tc = top(byCat), tt = byType.slice(0,2).map(o=>o.k);
+    const auto = `${tc.map(o=>o.k).join('·')} 중심 출제 · ${tt.join('·')} 비중이 가장 큼`;
+    const sumCard = `<div class="sum">
+      <div><span class="k">선택형</span><span class="v">${obj.length}문항</span><span class="s">${sumPts(obj)}점 · 배점의 ${pctOf(sumPts(obj))}%</span></div>
+      <div><span class="k">서답형</span><span class="v">${subj.length}문항</span><span class="s">${sumPts(subj)}점 · 배점의 ${pctOf(sumPts(subj))}%</span></div>
+      <div><span class="k">전체 구성</span><span class="v">${N}문항</span><span class="s">${total}점 · 킬러 ${killers.length}문항</span></div></div>
+      <p class="headline" contenteditable="true" data-k="headline" data-auto="${esc(auto)}">${esc(T.headline||auto)}</p>`;
 
-    /* 출처 */
-    const units = byCat.filter(o=>o.k!=='외부지문' && o.k!=='미확인').map(o=>{
-      const books = agg(o.rows, r=>r.book);
-      return books.map(b=>{
-        const us = agg(b.rows, r=>r.unit||'기타').sort((x,y)=> y.n-x.n || String(x.k).localeCompare(String(y.k),'ko',{numeric:true}));
-        return `<div><b>${esc(o.k)}</b>${b.k?`<span class="bk">${esc(b.k)}</span> `:''}— ${us.map(u=>`${esc(u.k)} ${u.n}`).join(' · ')}</div>`;
-      }).join('');
-    }).join('');
-    const src = `<div class="box"><h3>출처<small>막대 = 배점 비율</small></h3>
-      <div class="srow h"><span>출처</span><span></span><span class="n">문항</span><span class="p">배점</span><span class="r">평균변형</span></div>
-      ${byCat.map(o=>{ const a = avgRate(o.rows); return `<div class="srow"><b>${esc(o.k)}</b>${bar(pctOf(o.pts))}<span class="n">${o.n}</span><span class="p">${r1(o.pts)}점 ${pctOf(o.pts)}%</span><span class="r">${a==null?'—':a+'%'}</span></div>`; }).join('')}
-      ${units?`<div class="units">${units}</div>`:''}
-    </div>`;
+    /* 01 출제 출처 구성 */
+    const catParts = byCat.map((o,i)=>({...o, color:PAL[i%PAL.length]}));
+    const srcDet = byCat.filter(o=>o.k!=='외부지문' && o.k!=='미확인').flatMap(o=>{
+      const lines = [];
+      agg(o.rows, r=>r.book).forEach(b=>{
+        agg(b.rows, r=>r.unit||'기타').sort((x,y)=> y.n-x.n || String(x.k).localeCompare(String(y.k),'ko',{numeric:true})).forEach(u=>{
+          lines.push(`<div class="row"><span>${esc(o.k)}${b.k?' · '+esc(b.k):''} · ${esc(u.k)}</span><span>${u.n}문항 · ${r1(u.pts)}점</span></div>`); });
+      });
+      return lines; });
+    byCat.filter(o=>o.k==='외부지문' || o.k==='미확인').forEach(o=> srcDet.push(`<div class="row"><span>${esc(o.k)}</span><span>${o.n}문항 · ${r1(o.pts)}점</span></div>`));
+    const s01 = sec('01','출제 출처 구성',`전체 ${N}문항 기준`, `<div class="sb">
+      ${donut(catParts, N, {l:tc[0].k, p:pctS(tc[0].n,N), r:`${tc[0].n} / ${N}문항`})}
+      <div><table class="lg">${lgHead('출처','문항 수 · 배점','비율')}
+        ${catParts.map(o=>lgRow(o.color, esc(o.k), `${o.n}문항 · ${r1(o.pts)}점`, pctS(o.n,N))).join('')}</table>
+        ${srcDet.length?`<div class="det"><div class="dh">출처별 세부 구성</div>${srcDet.join('')}</div>`:''}</div></div>`);
 
-    /* 유형 */
-    const maxT = byType[0].n;
-    const typ = `<div class="box"><h3>유형<small>문항 수</small></h3>
-      ${byType.map(o=>`<div class="brow"><span class="bl">${esc(o.k)}</span>${bar(o.n/maxT*100)}<span class="bv"><b>${o.n}</b> · ${r1(o.pts)}점</span></div>`).join('')}
-    </div>`;
+    /* 02 문제 유형 */
+    const TOPN = 5, typeParts = byType.slice(0,TOPN).map((o,i)=>({...o, color:PAL[i]}));
+    const rest = byType.slice(TOPN);
+    if(rest.length) typeParts.push({k:`그 외 ${rest.length}가지`, n:rest.reduce((s,o)=>s+o.n,0), pts:rest.reduce((s,o)=>s+o.pts,0), color:PAL[5]});
+    const subjTypes = agg(subj, r=>r.type);
+    const s02 = sec('02','문제 유형',`유형 ${byType.length}가지 · 전체 ${N}문항 기준`, `<div class="sb">
+      ${donut(typeParts, N, {l:byType[0].k, p:pctS(byType[0].n,N), r:`${byType[0].n} / ${N}문항`})}
+      <div><table class="lg">${lgHead('유형','문항 수 · 배점','비율')}
+        ${typeParts.map(o=>lgRow(o.color, esc(o.k), `${o.n}문항 · ${r1(o.pts)}점`, pctS(o.n,N))).join('')}</table>
+        ${(rest.length||subj.length)?`<div class="det">
+          ${rest.length?`<div class="row"><span>그 외: ${rest.map(o=>`${esc(o.k)} ${o.n}`).join(' · ')}</span><span></span></div>`:''}
+          ${subj.length?`<div class="row"><span>서답형 ${subj.length}문항: ${subjTypes.map(o=>`${esc(o.k)} ${o.n}`).join(' · ')}</span><span>${sumPts(subj)}점</span></div>`:''}</div>`:''}</div></div>`);
 
-    /* 변형 */
-    const lvs = ['상','중','하','없음'].map(L=>({L, rs:lvCount(L)}));
-    const maxL = Math.max(1, ...lvs.map(o=>o.rs.length));
-    const color = {'상':'var(--lv3)','중':'var(--lv2)','하':'var(--lv1)','없음':'var(--lv0)'};
-    const label = {'상':'상 75%↑','중':'중 25~75','하':'하 5~25','없음':'없음 5%↓'};
+    /* 03 변형 정도 */
+    const lvs = ['상','중','하','없음'].map(L=>({k:L, rs:rows.filter(r=>r.v && r.v.level===L)})).map(o=>({...o, n:o.rs.length, pts:sumPts(o.rs), color:LV_COLOR[o.k]}));
+    const lvName = {'상':'상 (75% 이상)','중':'중 (25~75%)','하':'하 (5~25%)','없음':'없음 (5% 미만)'};
+    const noV = rows.filter(r=>!r.v), big = rows.filter(r=>r.v && r.v.level==='상');
     const meth = agg(rows.flatMap(r=>r.methods.map(x=>({...r, mk:x}))), r=>r.mk);
-    const big = rows.filter(r=>r.v && r.v.level==='상');
-    const vbox = `<div class="box"><h3>변형<small>문항 수</small></h3>
-      ${lvs.map(o=>`<div class="brow"><span class="bl">${label[o.L]}</span>${bar(o.rs.length/maxL*100, color[o.L])}<span class="bv"><b>${o.rs.length}</b> · ${r1(o.rs.reduce((s,r)=>s+r.pts,0))}점</span></div>`).join('')}
-      ${rows.length-withV.length?`<div class="note">원문 없음(변형률 계산 안 됨): ${esc(rows.filter(r=>!r.v).map(r=>qShort(r.no)).join(', '))}</div>`:''}
-      ${big.length?`<div class="sub-k">변형 '상' 문항: ${esc(big.map(r=>qShort(r.no)).join(', '))}</div>`:''}
-      <div class="sub-k">자주 쓴 변형 방식</div>
-      <div class="chips">${meth.slice(0,7).map(o=>`<span class="chip">${esc(o.k)} <b>${o.n}</b></span>`).join('')||'<span class="note">—</span>'}</div>
-    </div>`;
+    const s03 = sec('03','변형 정도',`원문과 비교한 ${withV.length}문항 기준`, `<div class="sb">
+      ${donut(lvs, withV.length, {l:'평균 변형률', p:avg==null?'—':avg+'%', r:avg==null?'원문 없음':`변형 ${LEVEL(avg)}`})}
+      <div><table class="lg">${lgHead('변형 정도','문항 수 · 배점','비율')}
+        ${lvs.map(o=>lgRow(o.color, lvName[o.k], `${o.n}문항 · ${o.pts}점`, pctS(o.n, withV.length))).join('')}</table>
+        <div class="det"><div class="dh">자주 쓴 변형 방식</div>
+          <div class="chips">${meth.slice(0,8).map(o=>`<span class="chip">${esc(o.k)} <b>${o.n}</b></span>`).join('')||'<span class="note">—</span>'}</div>
+          ${big.length?`<div class="note" style="margin-top:5px">변형 '상' 문항: ${esc(big.map(r=>qShort(r.no)).join(', '))}</div>`:''}
+          ${noV.length?`<div class="note">원문 없음(변형률 계산 안 됨): ${esc(noV.map(r=>qShort(r.no)).join(', '))}</div>`:''}</div></div></div>`);
 
-    /* 문항 지도 */
-    const tiles = rows.map(r=>{
-      const lv = r.v ? LV_CLASS[r.v.level] : 'lvx';
-      return `<div class="tile ${lv}${r.killer?' k':''}" title="${esc(qLabel(r.no)+' · '+(r.it.source&&r.it.source.detail||''))}">
-        <div class="t1"><b>${esc(qShort(r.no))}${r.killer?'<span class="star">★</span>':''}</b><small>${r.pts}점</small></div>
-        <div>${esc(r.type)}</div>
-        <div class="src">${esc(srcShort(r))}</div>
-        <div class="t4"><span>${r.v?r.v.rate+'%':'—'}</span><span class="df${r.diff==='상'?' h':''}">${esc(r.diff||'—')}</span></div></div>`; }).join('');
-    const map = `<div class="mapbox box"><h3>문항 지도<small>문항 순서대로</small></h3>
-      <div class="legend"><span>칸 왼쪽 색 = 변형 정도</span>
-        <span><i class="sw" style="border-top-color:var(--lv3)"></i>상</span><span><i class="sw" style="border-top-color:var(--lv2)"></i>중</span>
-        <span><i class="sw" style="border-top-color:var(--lv1)"></i>하</span><span><i class="sw" style="border-top-color:var(--lv0)"></i>없음</span>
-        <span>· 아래 줄 = 변형률 / 난이도</span><span>· ★ = 킬러(굵은 테두리)</span><span>· 교과=교과서 부교=부교재 모의=모의고사</span></div>
-      <div class="map">${tiles}</div></div>`;
+    /* 04 난이도 · 킬러 */
+    const dfs = ['상','중','하'].map(d=>({k:d, rs:rows.filter(r=>r.diff===d)})).map(o=>({...o, n:o.rs.length, pts:sumPts(o.rs), color:DF_COLOR[o.k]}));
+    const s04 = sec('04','난이도 · 킬러',`전체 ${N}문항 기준`, `<div class="sb">
+      ${donut(dfs, N, {l:'고난도(상)', p:`${dfs[0].n}문항`, r:`${dfs[0].pts}점 · 배점의 ${pctOf(dfs[0].pts)}%`})}
+      <div><table class="lg">${lgHead('난이도','문항 수 · 배점','비율')}
+        ${dfs.map(o=>lgRow(o.color, o.k, `${o.n}문항 · ${o.pts}점`, pctS(o.n,N))).join('')}</table>
+        <div class="det"><div class="dh">킬러 ${killers.length}문항</div>
+          ${killers.length ? killers.map(r=>`<div class="row"><span><span class="star">★</span> ${esc(qLabel(r.no))} · ${esc(r.type)} · ${esc(srcShort(r))}</span><span>${r.pts}점${r.v?' · 변형 '+r.v.rate+'%':''}</span></div>`).join('') : '<div class="note">킬러 문항 없음</div>'}</div></div></div>`);
 
-    /* 난이도·킬러 */
-    const maxD = Math.max(1, ...diffs.map(o=>o.rs.length));
-    const ansN = '①②③④⑤'.split('').map(c=>({c, n:obj.filter(r=>r.answer===c).length}));
-    const dbox = `<div class="box"><h3>난이도 · 킬러</h3>
-      ${diffs.map(o=>`<div class="brow"><span class="bl">${o.d}</span>${bar(o.rs.length/maxD*100, o.d==='상'?'var(--ink)':o.d==='중'?'var(--lv2)':'var(--lv1)')}<span class="bv"><b>${o.rs.length}</b> · ${r1(o.rs.reduce((s,r)=>s+r.pts,0))}점</span></div>`).join('')}
-      <div class="klist">${killers.length ? killers.map(r=>`<div><span class="star">★</span> ${esc(qLabel(r.no))} · ${esc(r.type)} · ${esc(srcShort(r))}${r.v?' · 변형 '+r.v.rate+'%':''}</div>`).join('') : '<div class="note">킬러 문항 없음</div>'}</div>
-      ${obj.length?`<div class="ans">객관식 정답 분포 ${ansN.map(a=>`${a.c}<b>${a.n}</b>`).join('')}</div>`:''}
-    </div>`;
-
-    /* 강사 총평 */
-    const blank = '<div class="blank"><i></i><i></i><i></i></div>';
-    const cbox = `<div class="box"><h3>강사 총평${m.reviewer?`<small>검수 ${esc(m.reviewer)}</small>`:''}</h3>
-      <div class="cm"><div class="ch">출제 경향 총평</div><div class="ce" contenteditable="true" data-k="overall" data-ph="예: 부교재·모의고사 비중이 교과서보다 크고, 부교재 UNIT 14에서 변형이 가장 컸다. 어휘·빈칸이 중심이며 킬러는 T/F 복합·서답형 어법.">${esc(T.overall||'')}</div>${blank}</div>
-      <div class="cm"><div class="ch">다음 시험 대비 포인트</div><div class="ce" contenteditable="true" data-k="prep" data-ph="예: 부교재는 원문 암기보다 바뀐 표현 다시 읽기 연습, 서답형 조건영작·어법 수정 반복, 모의고사 지문 문장 삭제·추가 대비.">${esc(T.prep||'')}</div>${blank}</div>
-      ${draft?`<p class="warnp">※ 강사 검수 전(AI 초안) 문항 ${draft}개가 포함된 자료입니다.</p>`:''}
-    </div>`;
+    /* 05 총평: 등급컷 · 특징 · 대비법 */
+    const ed = (k, ph, cls='') => `<div class="ce ${cls}" contenteditable="true" data-k="${k}" data-ph="${esc(ph)}">${esc(T[k]||'')}</div><div class="blank">${cls==='lead'?'<i></i>':'<i></i><i></i>'}</div>`;
+    const part = (label, k, ph) => `<div class="lb">${label}</div>${ed(k, ph)}`;
+    const rbox = (title, pre, ph) => `<div class="rbox"><div class="rh">${title}</div><div class="rb">
+        ${ed(pre+'Lead', ph.lead, 'lead')}
+        ${part('객관식', pre+'Obj', ph.obj)}
+        ${subj.length?part('주관식', pre+'Subj', ph.subj):''}</div></div>`;
+    const s05 = sec('05','총평', m.reviewer?`검수 ${m.reviewer}`:'', `
+      <div class="cutband">
+        <div class="lab">등급컷</div>
+        <div class="gs">${[1,2].map(i=>`<span class="g"><small>${i}등급</small><span class="cutv" contenteditable="true" data-k="cut${i}">${esc(T['cut'+i]||'')}</span><span class="u">점</span></span>`).join('')}</div>
+        <div><div class="cutnote" contenteditable="true" data-k="cutNote" data-ph="예: 전반적으로 어려운 시험이었습니다.">${esc(T.cutNote||'')}</div></div>
+      </div>
+      <div class="rv">
+        ${rbox('특징','feat',{lead:'예: 지문 변형이 매우 많았던 시험입니다.', obj:'예: 원문 암기보다 바뀐 지문의 이해가 중요했습니다. 글의 흐름과 핵심을 정확히 파악해야 했습니다.', subj:'예: 본문 빈칸·요약문 완성은 6문항으로, 단어 형태·철자가 중요합니다. 2번은 부분점수가 없고, 9번은 답안 기호를 반드시 써야 합니다.'})}
+        ${rbox('대비법','prep',{lead:'예: 원문 이해와 변형 지문 연습이 필요합니다.', obj:'예: 원문과 변형 지문을 비교하며 달라진 내용을 확인해야 합니다. 바뀐 지문을 기준으로 글의 흐름과 핵심을 파악하고, 선택지의 근거를 찾는 연습이 필요합니다.', subj:'예: 핵심 단어를 문장 속 빈칸에 직접 쓰며 단어 형태·철자를 확인해야 합니다. 부분점수 유무와 기호 등 답안 조건도 함께 점검해야 합니다.'})}
+      </div>
+      ${draft?`<p class="warnp">※ 강사 검수 전(AI 초안) 문항 ${draft}개가 포함된 자료입니다.</p>`:''}`);
 
     app.innerHTML = `
       <table class="frame">
-        <thead><tr><td><div class="run"><b>${esc(m.academy)} · 내신 경향분석</b><span>${esc(m.school)} ${esc(m.grade)} ${esc(m.exam)}</span></div></td></tr></thead>
-        <tfoot><tr><td></td></tr></tfoot>
+        <thead><tr><td><div class="topbar"></div><div class="run"><span>${esc(m.school)} ${esc(m.grade)} · ${esc(m.academy)}</span><span>${esc(m.exam)}</span></div></td></tr></thead>
+        <tfoot><tr><td><div class="foot"><span>${esc(m.date||'')} · 내신 경향분석</span><span>${esc(m.school)} ${esc(m.grade)} ${esc(m.exam)}</span></div></td></tr></tfoot>
         <tbody><tr><td>
           <section class="cover">
-            <h1>${esc(m.school)} ${esc(m.grade)} · ${esc(m.exam)} 경향분석</h1>
-            <p class="range">${esc(m.range)} &nbsp;|&nbsp; ${esc(m.date)}${m.reviewer?` &nbsp;|&nbsp; 검수 ${esc(m.reviewer)}`:''}</p>
-            <div class="bar"></div>
+            <h1>내신 경향분석</h1>
+            <p class="sub">출제 출처와 문제 유형을 한눈에 보는 시험 분석${m.reviewer?` · 검수 ${esc(m.reviewer)}`:''}</p>
+            ${m.range?`<p class="range">시험범위 · ${esc(m.range)}</p>`:''}
+            <div class="rule"></div>
           </section>
-          ${kpis}
-          <div class="row3">${src}${typ}${vbox}</div>
-          ${map}
-          <div class="row2">${dbox}${cbox}</div>
+          ${sumCard}
+          ${s01}${s02}${s03}${s04}${s05}
         </td></tr></tbody>
       </table>`;
   }
+
 
   /* ── 확인 패널 (화면 전용) ── */
   function panel(rows){
@@ -360,7 +391,6 @@
     if(rows.length){
       const pts = r1(rows.reduce((s,r)=>s+r.pts,0));
       L.push([Math.abs(pts-100)<0.05?'ok':'warn', `문항 ${rows.length}개 · 배점 합계 ${pts}점${Math.abs(pts-100)<0.05?'':' → 심화분석지에서 배점·문항 누락 확인'}`]);
-      if(m.stage!=='조교 확인 완료') L.push(['bad','조교 확인 전 심화분석지입니다 → 조교 확인·강사 검수를 마친 파일을 불러오세요']);
       const draft = rows.filter(r=>!r.done);
       if(draft.length) L.push(['warn', `강사 검수 전 ${draft.length}문항: ${draft.map(r=>qShort(r.no)).join(', ')} → 난이도·킬러가 AI 초안입니다. 인쇄본에도 표시됩니다`]);
       const ans = rows.filter(r=>r.it.answerCheck && r.it.answerCheck.result && r.it.answerCheck.result!=='일치' && !r.it.answerCheck.decision);
@@ -372,7 +402,9 @@
       const noV = rows.filter(r=>!r.v);
       if(noV.length) L.push(['info', `원문이 없어 변형률을 계산하지 않은 문항: ${noV.map(r=>qShort(r.no)).join(', ')}`]);
       const T = m.trend||{};
-      if(!(T.overall||'').trim() || !(T.prep||'').trim()) L.push(['warn','강사 총평 두 칸을 채워 주세요 (비워 두면 인쇄본에 손글씨 줄이 나옵니다)']);
+      const need = ['featLead','featObj','prepLead','prepObj'].concat(rows.some(r=>isSubj(r.no))?['featSubj','prepSubj']:[]);
+      if(need.some(k=>!(T[k]||T[k==='featObj'?'overall':k==='prepObj'?'prep':'']||'').trim())) L.push(['warn','총평의 특징·대비법 칸을 채워 주세요 (비워 두면 인쇄본에 손글씨 줄이 나옵니다)']);
+      if(![1,2].some(i=>(T['cut'+i]||'').trim())) L.push(['info','등급컷이 비어 있습니다 → 성적이 나오면 총평의 1·2등급 칸에 적거나, 인쇄본 빈칸에 직접 적습니다']);
       if(!L.filter(x=>x[0]==='bad'||x[0]==='warn').length) L.push(['ok','확인 항목 이상 없음 · 바로 인쇄할 수 있습니다']);
     }
     const icon = {ok:'✓',bad:'✕',warn:'!',info:'·'};
@@ -384,9 +416,13 @@
   }
 
   /* 총평 입력 */
+  app.addEventListener('keydown', ev => { if(ev.key==='Enter' && ev.target.classList && (ev.target.classList.contains('cutv') || ev.target.classList.contains('cutnote') || ev.target.classList.contains('headline'))){ ev.preventDefault(); ev.target.blur(); } });
   app.addEventListener('focusout', ev => {
     const k = ev.target.dataset && ev.target.dataset.k; if(!k) return;
-    const t = ev.target.innerText.replace(/\n{3,}/g,'\n\n').trim(), T = D.meta.trend = D.meta.trend||{};
+    let t = ev.target.innerText.replace(/\n{3,}/g,'\n\n').trim(); const T = D.meta.trend = D.meta.trend||{};
+    if(k==='headline'){ t = t.replace(/\s*\n\s*/g,' '); if(t===ev.target.dataset.auto) t=''; }
+    if(/^cut\d$/.test(k)) t = t.replace(/\s+/g,'').replace(/점(이상)?$/,'');
+    if(k==='cutNote') t = t.replace(/\s*\n\s*/g,' ');
     if(t !== (T[k]||'')){ T[k] = t; dirty = true; const y = window.scrollY; render(); window.scrollTo(0,y); }
   });
 
