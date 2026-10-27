@@ -78,11 +78,10 @@
     $$('.step').forEach(s => io.observe(s));
   }
 
-  /* 기준표 · 변경 기록 */
+  /* 기준표 */
   $('#critList').innerHTML = H.criteria.map((c,i)=>`<details class="crit"${i===0?' open':''}><summary>${esc(c.title)}</summary><div class="cb">
       ${c.table?`<dl class="kv">${c.table.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${fmt(v)}</dd>`).join('')}</dl>`:''}
       ${(c.body||[]).map(p=>`<p>${fmt(p)}</p>`).join('')}</div></details>`).join('');
-  $('#logBody').innerHTML = H.changelog.map(([d,t,x])=>`<tr><td>${esc(d)}</td><td>${esc(t)}</td><td>${fmt(x)}</td></tr>`).join('');
 
   /* ── 프롬프트 ── */
   $('#promptText').textContent = H.prompt;
@@ -125,8 +124,6 @@
     }
   }
   window.addEventListener('hashchange', show);
-  /* 버전 표시를 누르면 변경 기록으로 */
-  $('#verPill').addEventListener('click', ev => { ev.preventDefault(); location.hash = '#guide'; setTimeout(()=>$('#changelog').scrollIntoView({block:'start'}), 30); });
 
   /* 분석지 탭에서 Ctrl/Cmd+P를 누르면 바깥 페이지 대신 템플릿을 인쇄 */
   document.addEventListener('keydown', ev => {

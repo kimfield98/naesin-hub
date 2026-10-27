@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.7
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.8
+  (v3.8 · 2026.10.28: 글꼴·크기·자간·행간 통일(한글은 모두 본문 고딕, 영어는 Times 계열), 표지의 표시 설명(형광펜·밑줄·근거·변형률) 삭제, 특이사항에 AI 초안(note) 표시)
   (v3.7 · 2026.10.28: 조교 단계 삭제 — 강사가 붙여넣기부터 검수·저장까지 모두 진행. 검수 패널은 ① 데이터 확인 / ② 검수)
   (v3.6 · 2026.10.28: 문항 번호를 객관1·서답1처럼 같은 크기로 표기, 출처를 한 줄 요약(교과서 · 3과 / 부교재 · 올림포스 / 모의고사 · 26년 3모 36번), 문항 평가는 난이도·킬러 + 특이사항 줄글로 단순화)
   (v3.5 · 2026.10.27: 일람표 지문 열 압축 표기, 고치기 창 칸 너비 조정·긴 정답은 넓은 입력칸)
@@ -276,6 +277,40 @@
     .eval.locked .seg,.eval.locked .tags,.eval.locked .memo{opacity:1}
   }
   @media (max-width:860px){ .panel .cols{grid-template-columns:1fr} .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} }
+
+  /* ───────── v3.8 타이포그래피 통일 (위 규칙보다 우선) ─────────
+     한글: 본문 고딕 한 가지(--f-ko) · 영어 지문/선지: Times 계열(--f-en, 한글이 섞이면 자동으로 본문 고딕)
+     크기: 11 라벨 · 12 보조(해석·표) · 13 한글 본문 · 13.5 강조(발문·문항 정보) · 14.5 영어 본문
+     행간: 영어 1.7 · 한글 본문 1.6 · 라벨/표 1.4    자간: 한글 -0.01em · 제목 -0.02em · 영어 0 */
+  :root{ --f-ko:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif; --f-en:'Times New Roman',Times,Georgia,var(--f-ko);
+         --fs-lab:11px; --fs-s:12px; --fs-b:13px; --fs-st:13.5px; --fs-en:14.5px; }
+  body{font-family:var(--f-ko);font-size:var(--fs-b);line-height:1.6;letter-spacing:-.01em}
+  .en,details.orig .t,details.orig textarea.oedit,.ef textarea{font-family:var(--f-en);letter-spacing:0}
+  .kr{font-family:var(--f-ko)}
+  button,input,select,textarea{font-family:var(--f-ko)}
+  .basis sup{font-family:var(--f-ko)}
+  .cover h1{letter-spacing:-.02em;line-height:1.3}
+  .cover .range{font-size:var(--fs-b);line-height:1.6}
+  .cover .range + table.list,.cover table.list{margin-top:14px}
+  .run{font-size:var(--fs-lab)}
+  .qno{letter-spacing:-.02em}
+  .cell .k{font-size:var(--fs-lab);line-height:1.4}
+  .cell .v{font-size:var(--fs-st);line-height:1.4}
+  .cell .v.s{font-size:var(--fs-s);line-height:1.4}
+  .stem{font-size:var(--fs-st);line-height:1.6}
+  .passage,.para.passage{font-size:var(--fs-en);line-height:1.7}
+  table.pair td.en{font-size:var(--fs-en);line-height:1.7}
+  table.pair td.kr{font-size:var(--fs-b);line-height:1.6}
+  table.pair td.ko{font-size:var(--fs-s);line-height:1.7}
+  table.pair td.no{font-size:var(--fs-b);line-height:1.7}
+  .choices{font-size:var(--fs-en);line-height:1.7}
+  .ansbar .en{font-size:var(--fs-en);line-height:1.6}
+  .ansbar .k,.basis-box,.acheck,.memo,.memo.note{font-size:var(--fs-b);line-height:1.6}
+  .note-k,.eval-h .t,.sub-h{font-size:var(--fs-s)}
+  .row .k,.seg button,.status,.methods,.afix,.count,.gbar span,.legend{font-size:var(--fs-s);line-height:1.4}
+  table.list{font-size:var(--fs-s)} table.list td.g,table.list td:nth-child(4){font-size:var(--fs-lab)}
+  table.ans{font-size:var(--fs-s)} table.ans td.a{font-size:var(--fs-b);line-height:1.5}
+  details.orig .t{font-size:var(--fs-en);line-height:1.7}
 </style>
 </head>
 <body>
@@ -462,7 +497,7 @@
     if(it.choices && it.choices.length){
       const ko = it.choicesKo||[], showKo = needKo(it.choices) && ko.length;
       if(!showKo && it.choices.every(c=>String(c).length<=8)) choices = `<ol class="choices">${it.choices.map((c,k)=>`<li class="${k===ansIdx?'ans':''}"><span>${'①②③④⑤'[k]||''}</span> ${mark(c)}</li>`).join('')}</ol>`;
-      else choices = `<div class="choices-wrap"><table class="pair"><tbody>${it.choices.map((c,k)=>`<tr class="${k===ansIdx?'ans':''}"><td class="no">${'①②③④⑤'[k]||''}</td><td class="en"${showKo?'':' style="width:auto"'}>${mark(c)}</td>${showKo?`<td class="ko">${mark(ko[k]||'')}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+      else choices = `<div class="choices-wrap"><table class="pair"><tbody>${it.choices.map((c,k)=>`<tr class="${k===ansIdx?'ans':''}"><td class="no">${'①②③④⑤'[k]||''}</td><td class="${needKo(it.choices)?'en':'kr'}"${showKo?'':' style="width:auto"'}>${mark(c)}</td>${showKo?`<td class="ko">${mark(ko[k]||'')}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
     }
     const ac = it.answerCheck;
     let acheck = '';
@@ -613,17 +648,10 @@
           <section class="cover">
             <h1>${esc(m.school)} ${esc(m.grade)} · ${esc(m.exam)} 심화분석</h1>
             <p class="range">${esc(m.range)} &nbsp;|&nbsp; ${esc(m.date)}${m.reviewer?` &nbsp;|&nbsp; 검수 ${esc(m.reviewer)}`:''}</p>
-            <div class="bar"></div>
-            <div class="legend">
-              <span><span class="chg en">highlight</span> 원문에 없는 새 표현</span>
-              <span><span class="ul en">underline</span> 시험지 밑줄</span>
-              <span><span class="basis en">evidence</span> 정답 근거</span>
-              <span>변형률 · 시험 지문 중 새 표현의 비율 (없음 5% 미만 / 하 5~25% / 중 25~75% / 상 75% 이상)</span>
-            </div>
             <table class="list"><thead><tr><th>문항</th><th>지문</th><th>배점</th><th>정답</th><th>유형</th><th>출처</th><th>변형률</th><th>난이도</th><th>킬러</th></tr></thead>
               <tbody>${items.map(listRow).join('')}</tbody></table>
             ${(()=>{ const L = items.filter(it=>longAns(it.answer)); return L.length ? `<table class="ans"><caption>서답형 정답 (모범답안)</caption><thead><tr><th>문항</th><th>배점</th><th>정답</th></tr></thead><tbody>${
-              L.map(it=>`<tr><td>${esc(qLabel(it.no))}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}</td><td>${esc(it.points)}</td><td class="a en">${esc(it.answer)}${it.answerFix?'<span class="fxb">정정</span>':''}</td></tr>`).join('')}</tbody></table>` : ''; })()}
+              L.map(it=>`<tr><td>${esc(qTag(it.no))}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}</td><td>${esc(it.points)}</td><td class="a en">${esc(it.answer)}${it.answerFix?'<span class="fxb">정정</span>':''}</td></tr>`).join('')}</tbody></table>` : ''; })()}
             <div class="count">지문 열은 같은 지문을 쓰는 문항 묶음 (서3 = 서답형 3) · 킬러 문항은 굵게 표시 · 문항별 상세는 다음 쪽부터</div>
           </section>
           <section class="cards">${cards()}</section>
@@ -741,7 +769,8 @@
   });
 
   /* AI 초안 보관: 처음 들어온 평가를 eval.ai 에 남겨 강사 수정과 비교 */
-  const snap = it => { if(it.eval && !it.eval.ai) it.eval.ai = {difficulty:it.eval.difficulty, killer:!!it.eval.killer, factors:[...(it.eval.factors||[])]}; };
+  const noteFromMemo = it => { const e = it.eval; if(e && e.status!=='done' && e.note==null && e.memo){ e.note = e.memo; } };   // 예전 JSON(memo)도 특이사항 초안으로
+  const snap = it => { noteFromMemo(it); if(it.eval && !it.eval.ai) it.eval.ai = {difficulty:it.eval.difficulty, killer:!!it.eval.killer, factors:[...(it.eval.factors||[])]}; };
   const order = no => isSubj(no) ? 1000 + (parseInt(String(no).replace(/\D/g,''))||0) : (parseInt(no)||0);
 
   /* 데이터 붙여넣기: meta가 있으면 새 시험으로 시작, 없으면 같은 번호만 교체·추가 */
