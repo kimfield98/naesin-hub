@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<!--
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.5
+  (v3.5 · 2026.10.27: 일람표 지문 열 압축 표기, 고치기 창 칸 너비 조정·긴 정답은 넓은 입력칸)
+  (v3.4 · 2026.10.27: 서답형 긴 정답을 카드·일람표에서 따로 표시, [정답 확인]을 카드 위쪽으로 옮기고 검수 패널·일람표에서 바로 이동)
+  (v3.3 · 2026.10.27: 문항 카드의 '변형 대조' 표 삭제 — 형광펜과 원문 보기로 대신함)
+  (v3.2 · 2026.10.27: 학교 정답표 오류를 강사가 근거와 함께 정정하는 [정답 확인] 기능 추가)
+  (v3.1 · 2026.10.27: 공유 지문 근거 표시에서 서답형 번호(**서답1|…**)가 인식되지 않던 문제 수정)
+
+  흐름
+  1. [조교] 브라우저로 열고 [데이터 붙여넣기] → AI가 준 JSON을 넣습니다. (여러 번에 나눠 붙여도 됩니다)
+  2. [조교] 검수 패널 '① 조교 확인'의 ✕를 모두 없애고 [조교 확인 완료] → [저장]
+     → 다운로드 폴더에 새로 생긴 파일을 카톡·드라이브로 강사에게 전달 (처음 연 템플릿 파일은 바뀌지 않음)
+  3. [강사] 받은 파일을 더블클릭해 열거나, 빈 템플릿에서 [파일 불러오기]로 열고 '② 강사 확인'을 해결하며 문항 평가를 확정 → [저장]
+  4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄
+     기본은 해석 없이 인쇄. 해석까지 인쇄하려면 위쪽 '인쇄에 해석 포함'에 체크
+
+  자동 계산(고정 공식, 사람이 고치지 않음)
+  - 변형률: 시험 지문 단어 중 '원문에 같은 연속 3단어가 없는 단어'의 비율. 형광펜도 이 계산으로 자동 표시
+  - 변형 정도: 없음 5% 미만 · 하 5~25% · 중 25~75% · 상 75% 이상
+  - 난이도 제안: 난이도 요인 0개 하 · 1~2개 중 · 3개 이상 상 (다르게 고르면 이유 필수)
+  디자인·계산 코드는 수정하지 않습니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내신 심화분석</title>
+<style>
+
+  /* ───────── 고정 디자인: 작업자는 이 부분을 수정하지 않습니다 ───────── */
+  :root{ --accent:#1E3A5F; --line:#C9D2DD; --ink:#1A1F2B; --sub:#4A5260; --faint:#7A8392; --hl:#FFE27A; }
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:0}
+  html,body{margin:0;background:#E6E9EE}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);font-size:13px;line-height:1.55;word-break:keep-all}
+  .sheet{width:794px;margin:24px auto;background:#fff;padding:0 46px}
+  .en{font-family:'Times New Roman',Georgia,'Noto Serif',serif}
+
+  /* 매 페이지 반복되는 머리글·여백 (인쇄 시 페이지마다 자동 반복) */
+  table.frame{width:100%;border-collapse:collapse}
+  table.frame > thead td{height:15mm;vertical-align:bottom;padding:0 0 3mm}
+  table.frame > tfoot td{height:11mm}
+  .run{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line);padding-bottom:5px}
+  .run b{color:var(--accent);font-weight:700}
+
+  /* 표지 + 일람표 */
+  .cover h1{margin:6px 0 4px;font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .cover .range{margin:0 0 14px;font-size:13px;color:var(--sub)}
+  .cover .bar{height:3px;background:var(--accent)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 20px;font-size:12px;color:var(--sub);margin:10px 0 10px}
+  table.list{width:100%;border-collapse:collapse;font-size:12px}
+  table.list th{font-weight:700;color:var(--accent);text-align:center;padding:5px 4px;border-top:2px solid var(--accent);border-bottom:1px solid var(--accent)}
+  table.list td{text-align:center;padding:2px 4px;border-bottom:1px solid #E3E8EE;height:21px}
+  table.list td.l{text-align:left}
+  table.list tr.killer td{font-weight:700}
+  .none{color:#B4BBC6}
+  .count{margin-top:8px;font-size:12px;color:var(--faint);text-align:right}
+
+  /* 문항 카드 */
+  .cards{break-before:page}
+  .card{padding:0 0 22px;break-inside:avoid-page}
+  .card + .card{border-top:1px dashed var(--line);padding-top:18px}
+  .qhead{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:stretch;border-left:5px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px;break-after:avoid}
+  .qno{font-size:30px;font-weight:800;color:var(--accent);line-height:1;display:flex;align-items:center}
+  .qno small{font-size:14px;font-weight:700;margin-left:1px}
+  .cells{display:grid;grid-template-columns:46px 52px 1fr 92px 96px;gap:4px 14px;align-items:end}
+  .cell .k{display:block;font-size:11px;color:var(--faint)}
+  .cell .v{display:block;font-size:13.5px;font-weight:700}
+  .vchip{display:inline-block;border:1.5px solid var(--accent);border-radius:4px;padding:0 6px;font-size:12.5px;color:var(--accent)}
+  .vchip.x{border-color:var(--line);color:var(--sub)}
+
+  .stem{font-weight:700;font-size:13.5px;margin:0 0 8px}
+  .passage{border:1px solid var(--line);border-radius:6px;padding:12px 16px;font-size:14px;line-height:1.85}
+  .passage p{margin:0}
+  .choices{margin:10px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(5,auto);justify-content:start;gap:4px 26px;font-size:14px}
+  .choices.long{grid-template-columns:1fr}
+  .choices li.ans{font-weight:700;color:var(--accent)}
+
+  /* 표시 방식: 배경 그래픽 설정이 꺼져 있어도 인쇄되도록 밑줄 기반으로 표현 */
+  .chg{text-decoration-line:underline;text-decoration-color:var(--hl);text-decoration-thickness:.68em;text-underline-offset:-.46em;text-decoration-skip-ink:none}
+  .ul{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+  .basis{border-bottom:2px solid var(--accent);font-weight:700}
+
+  .basis sup{font-size:9px;font-weight:700;color:#fff;border:1px solid var(--accent);color:var(--accent);border-radius:2px;padding:0 2px;margin-right:2px;font-family:'Noto Sans KR',sans-serif;vertical-align:2px}
+  .gbar{display:flex;align-items:baseline;gap:10px;border-top:3px solid var(--accent);padding-top:8px;margin-bottom:8px;break-after:avoid}
+  .gbar b{font-size:20px;font-weight:800;color:var(--accent)}
+  .gbar span{font-size:12px;color:var(--sub)}
+  .group .passage.shared{margin-bottom:6px}
+  .group .q{border-top:1px dashed var(--line);padding-top:16px;margin-top:18px}
+  .pending{border:1px dashed var(--line);border-radius:6px;padding:10px 14px;font-size:12.5px;color:var(--faint)}
+  .notice{font-size:12px;color:#9A6A00;margin:4px 0 0}
+  table.list td.g{color:var(--faint);font-size:11px}
+  .sub-h{font-size:12.5px;font-weight:700;color:var(--accent);margin:16px 0 6px;break-after:avoid}
+
+  .eval{border:1.5px solid var(--accent);border-radius:8px;padding:10px 14px 12px;margin-top:16px;break-inside:avoid}
+  .eval-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .eval-h .t{font-size:12.5px;font-weight:700;color:var(--accent)}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+  .row .k{font-size:12px;color:var(--sub);width:66px;flex:none;white-space:nowrap}
+  .seg{display:flex;gap:4px}
+  .seg button,.tag,.status{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:4px;padding:1px 9px;cursor:pointer}
+  .seg button.on,.tag.on{border:1.5px solid var(--accent);color:var(--accent);font-weight:700}
+  .tags{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+  .memo{font-size:13px;line-height:1.6;border-top:1px dotted var(--line);padding-top:7px;min-height:22px;outline:none;white-space:pre-line}
+  .memo:focus{border-top-color:var(--accent)}
+  .memo:empty::before{content:'메모를 입력하세요';color:#B4BBC6}
+  .status{border-style:dashed;color:#9A6A00;border-color:#D9B44A}
+  .status.done{border-style:solid;color:#1F7A4A;border-color:#1F7A4A}
+  button:focus-visible,.memo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* 화면 전용 도구 */
+  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px}
+  .toolbar .p{margin-right:auto}
+  .toolbar button{font:inherit;font-size:13px;border:1px solid #fff;background:transparent;color:#fff;border-radius:5px;padding:4px 12px;cursor:pointer}
+  .toolbar button.main{background:#fff;color:var(--accent);font-weight:700}
+
+  @media print{
+    html,body{background:#fff}
+    .toolbar,.status,.notice,.panel,.dlg,.scr{display:none!important}
+    .sheet{width:auto;margin:0;padding:0 13mm}
+    .seg button:not(.on),.tag:not(.on){display:none}
+    .seg button.on,.tag.on{cursor:default}
+    .memo:empty{display:none}
+  }
+
+  /* v2 추가: 근거 상태·변형 방식·정답 대조·검수 패널 */
+  .st{display:inline-block;font-size:10.5px;font-weight:700;border:1px solid var(--line);color:var(--sub);border-radius:3px;padding:0 4px;margin-left:4px;vertical-align:1px}
+  .st.bad{border-color:#D9B44A;color:#9A6A00}
+  .methods{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:12px 0 0;font-size:12px}
+  .methods .k{color:var(--sub);font-weight:700;margin-right:4px}
+  .methods span.m{border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:0 7px}
+  .acheck{margin:10px 0 0;font-size:12.5px;border:1px dashed #D9B44A;color:#9A6A00;border-radius:6px;padding:6px 10px}
+  .acheck .ab{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .acheck button{font:inherit;font-size:12px;padding:3px 10px;border:1px solid #C9A44A;background:#fff;color:#7A5200;border-radius:5px;cursor:pointer}
+  .acheck button.main{background:#9A6A00;border-color:#9A6A00;color:#fff}
+  .acheck.ok{border-style:solid;border-color:#B9C8B0;color:#3F6B32}
+  .acheck .af{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;margin-top:6px;align-items:start}
+  .acheck .af input,.acheck .af textarea{font:inherit;font-size:12.5px;padding:4px 6px;border:1px solid #D9C48A;border-radius:4px;width:100%;box-sizing:border-box}
+  .afix{margin:8px 0 0;font-size:11.5px;color:#555;border-left:3px solid #9A6A00;padding:2px 8px}
+  .fxb{display:inline-block;font-size:10px;padding:0 4px;margin-left:3px;border:1px solid #9A6A00;color:#9A6A00;border-radius:3px;vertical-align:1px}
+  table.list td .scr{color:#B42318;font-weight:700}
+  table.list td .more{color:var(--faint);font-size:11px}
+  .panel{width:794px;margin:18px auto 0;background:#fff;border-radius:8px;padding:14px 18px;font-size:13px;border:1px solid var(--line)}
+  .panel h2{margin:0 0 8px;font-size:14px;color:var(--accent)}
+  .panel h2 small{font-weight:400;color:var(--faint);margin-left:6px}
+  .chk{display:grid;grid-template-columns:22px 1fr;gap:2px 6px;line-height:1.55}
+  .chk .i{font-weight:800;text-align:center}
+  .chk .ok{color:#1F7A4A} .chk .warn{color:#9A6A00} .chk .bad{color:#B42318}
+  .dlg{position:fixed;inset:0;background:rgba(20,30,45,.45);display:none;align-items:center;justify-content:center;z-index:10}
+  .dlg.on{display:flex}
+  .dlg .in{background:#fff;border-radius:10px;padding:18px;width:min(760px,92vw);display:flex;flex-direction:column;gap:10px;font-size:13px}
+  .dlg textarea{width:100%;height:50vh;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:10px}
+  .dlg .r{display:flex;gap:8px;align-items:center}
+  .dlg .msg{margin-right:auto;font-size:12.5px;color:#B42318}
+  .dlg button{font:inherit;font-size:13px;border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:5px;padding:5px 14px;cursor:pointer}
+  .dlg button.main{background:var(--accent);color:#fff}
+
+  /* 일람표 한 쪽 고정: 열 너비 고정, 출처는 한 줄(넘치면 …) — 전체 출처는 카드에 표시 */
+  table.list{table-layout:fixed}
+  table.list th:nth-child(1){width:58px} table.list th:nth-child(2){width:66px} table.list th:nth-child(3){width:36px}
+  table.list th:nth-child(4){width:86px} table.list th:nth-child(5){width:76px} table.list th:nth-child(7){width:74px}
+  table.list th:nth-child(8){width:46px} table.list th:nth-child(9){width:34px}
+  table.list td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.list td:nth-child(4){font-size:11px;white-space:normal;line-height:1.3}
+  table.list th{white-space:nowrap}
+  table.list td .st{margin:0 4px 0 0}
+
+  /* ───────── v3 추가 ───────── */
+  .card{break-inside:auto}
+  .qhead{break-inside:avoid}
+  .cells{grid-template-columns:40px 46px 1fr 84px 92px}
+  .cell .v.s{font-size:12.5px;line-height:1.35}
+  /* v3.4: 긴 정답(서답형) */
+  .cell .v.more{font-size:11.5px;font-weight:600;color:var(--faint)}
+  .ansbar{display:flex;gap:10px;align-items:baseline;margin:8px 0 0;padding:6px 10px;border:1px solid #D5DCE5;border-radius:6px;background:#F7F9FB;break-inside:avoid}
+  .ansbar .k{flex:none;font-size:11.5px;font-weight:700;color:var(--accent)}
+  .ansbar .en{font-size:13.5px;line-height:1.5}
+  table.ans{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+  table.ans tr{break-inside:avoid}
+  @media print{ table.list td{height:19px;padding:1px 4px} table.ans td{padding:3px 6px} }
+  table.ans caption{text-align:left;font-weight:700;color:var(--accent);font-size:12px;padding-bottom:4px}
+  table.ans th{font-weight:700;color:var(--accent);padding:4px;border-top:2px solid var(--accent);border-bottom:1px solid var(--accent)}
+  table.ans td{padding:4px 6px;border-bottom:1px solid #E3E8EE;vertical-align:top}
+  table.ans td:nth-child(1),table.ans td:nth-child(2){text-align:center;white-space:nowrap;width:58px}
+  table.ans td.a{line-height:1.45}
+  a.goto{color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+  .card,.q{scroll-margin-top:72px}
+  .qhead{grid-template-columns:auto 1fr} .qno{min-width:52px;white-space:nowrap} .qno small{font-size:12px}
+  .acheck + .stem,.ansbar + .stem,.afix + .stem{margin-top:12px}
+  .flash{animation:flash 1.6s ease-out}
+  @keyframes flash{0%{box-shadow:0 0 0 4px #F5C542}100%{box-shadow:0 0 0 4px transparent}}
+
+  /* 지문|해석, 선지|해석 2열 */
+  table.pair{width:100%;border-collapse:collapse;border:1px solid var(--line);border-radius:6px;table-layout:fixed}
+  table.pair td{vertical-align:top;padding:4px 10px;border-bottom:1px solid #EEF1F5}
+  table.pair tr:last-child td{border-bottom:0}
+  table.pair tr{break-inside:avoid}
+  table.pair td.en{width:56%;font-size:13.5px;line-height:1.6}
+  table.pair td.ko{font-size:12px;line-height:1.6;color:var(--sub);border-left:1px solid #EEF1F5}
+  table.pair td.no{width:24px;padding-right:0;font-size:13px;color:var(--sub)}
+  table.pair tr.ans td{font-weight:700;color:var(--accent)}
+  table.pair tr.ans td.ko{color:var(--accent)}
+  table.pair.split td.en,table.pair.split td.ko{white-space:pre-line}
+  .choices-wrap{margin-top:10px}
+  .shared + .q{margin-top:14px}
+
+  .box{margin-top:8px} .box table.pair{border:1.5px solid var(--sub)}
+  /* 답 근거 */
+  .basis-box{margin-top:10px;border-left:3px solid var(--accent);background:#F4F7FA;padding:7px 12px;font-size:12.5px;line-height:1.6;break-inside:avoid}
+  .basis-box b{color:var(--accent);margin-right:8px}
+
+  /* 원문 보기 (화면 전용) */
+  details.orig{margin-top:10px;font-size:12px;border:1px dashed var(--line);border-radius:6px;padding:6px 10px;color:var(--sub)}
+  details.orig summary{cursor:pointer;font-weight:700;color:var(--accent)}
+  details.orig .t{font-family:'Times New Roman',Georgia,serif;font-size:13px;line-height:1.7;margin-top:6px;color:var(--ink)}
+  details.orig .del{color:#A0A7B2;text-decoration:line-through;text-decoration-color:#C3C9D2}
+
+  details.orig .obar{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11.5px}
+  details.orig .obar span{flex:1;color:var(--faint)}
+  details.orig .obar button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:4px;padding:2px 9px;cursor:pointer}
+  details.orig .obar button.main{background:var(--accent);color:#fff;border-color:var(--accent)}
+  details.orig textarea.oedit{width:100%;margin-top:6px;font-family:'Times New Roman',Georgia,serif;font-size:13px;line-height:1.6;border:1px solid var(--accent);border-radius:4px;padding:6px 8px;resize:vertical}
+  details.orig .fixed{color:#B42318}
+  .qhead{position:relative} .ebtn{font:inherit;font-size:11.5px;border:1px solid var(--line);background:#fff;color:var(--accent);border-radius:4px;padding:1px 8px;cursor:pointer}
+  .qhead > .ebtn{position:absolute;right:0;top:-2px} .gbar .ebtn{margin-left:auto}
+  .eform{border:2px solid var(--accent);border-radius:8px;padding:10px 12px;margin-top:8px;background:#FAFBFD;display:flex;flex-direction:column;gap:8px}
+  .eform .eh{display:flex;align-items:center;gap:8px;font-size:12px} .eform .eh span{flex:1;color:var(--faint)}
+  .eform .eh button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:#fff;border-radius:4px;padding:3px 12px;cursor:pointer}
+  .eform .eh button.main{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .eform .er{display:grid;grid-template-columns:64px minmax(110px,1fr) 1fr 1fr 1fr;gap:8px} .eform .er.noans{grid-template-columns:64px 1fr 1fr 1fr} .eform .er2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .eform .er3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px}
+  label.ef,.ef{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--sub)}
+  .ef input,.ef select,.ef textarea{font:inherit;font-size:12.5px;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:4px 6px;background:#fff;width:100%;resize:vertical}
+  .ef textarea{font-family:'Times New Roman',Georgia,'Noto Sans KR',serif;font-size:13px;line-height:1.5}
+  .ef .ck{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink)} .ef .ck input{width:auto}
+  .enote{margin:0;font-size:12px;color:var(--faint)}
+  .chk .i.info{color:var(--faint)}
+  @media print{ .ebtn,.eform{display:none!important} }
+  /* 평가: 제안·사유·잠금 */
+  .seg button.sug{position:relative}
+  .seg button.sug::after{content:'제안';position:absolute;top:-9px;right:-6px;font-size:9px;font-weight:700;color:#fff;background:#6B7A90;border-radius:3px;padding:0 3px;line-height:13px}
+  .reason{flex:1;min-width:200px;font-size:12.5px;border-bottom:1px solid #D9B44A;outline:none;padding:1px 2px}
+  .reason:empty::before{content:attr(data-ph);color:#B98A1A}
+  .aidraft{font-size:11.5px;color:var(--faint);margin-left:auto;margin-right:10px}
+  .eval.locked .seg,.eval.locked .tags,.eval.locked .memo,.eval.locked .status{pointer-events:none;opacity:.55}
+  .lock-note{font-size:11.5px;color:#9A6A00;margin:0 0 6px}
+
+  /* 검수 패널: 조교/강사 */
+  .panel .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel h3{margin:0 0 6px;font-size:13px;color:var(--accent);display:flex;gap:8px;align-items:baseline}
+  .panel h3 small{font-weight:400;color:var(--faint)}
+  .panel .who{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:12.5px;color:var(--sub);align-items:center}
+  .panel .who input{font:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:4px;padding:2px 6px;width:96px}
+  .panel .who .stage{margin-left:auto;font-weight:700;color:var(--accent)}
+  .panel label.ck{display:flex;gap:6px;align-items:flex-start;margin:6px 0 0;font-size:12.5px;cursor:pointer}
+  .panel .saved{margin:-4px 0 10px;font-size:12px;color:var(--sub)} .panel .unsaved{color:#B42318;font-weight:700}
+  .empty{padding:60px 0;text-align:center;color:var(--faint);font-size:14px;line-height:1.8}
+  .toolbar button:disabled{opacity:.4;cursor:not-allowed}
+
+  .para{display:none}
+  .para:only-child,.para:not(:has(+ table)){display:block} .para p{margin:0} .para p + p{margin-top:2px}
+  .toolbar .pko{display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px}
+  @media print{
+    body.noko table.pair td.ko{display:none}
+    body.noko table.pair td.en{width:auto}
+    body.noko .para{display:block} body.noko table.withko{display:none}
+    .seg button.sug::after{display:none}
+    details.orig,.aidraft,.lock-note,.reason:empty{display:none!important}
+    .eval.locked .seg,.eval.locked .tags,.eval.locked .memo{opacity:1}
+  }
+  @media (max-width:860px){ .panel .cols{grid-template-columns:1fr} .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="p" id="progress"></span>
+  <button type="button" id="btnLoad">파일 불러오기</button><input type="file" id="fileIn" accept=".html,.htm,.json" hidden>
+  <button type="button" id="btnPaste">데이터 붙여넣기</button>
+  <button type="button" id="btnAsst">조교 확인 완료</button>
+  <button type="button" id="btnSave">저장</button>
+  <label class="pko"><input type="checkbox" id="ckKo"> 인쇄에 해석 포함</label>
+  <button type="button" class="main" id="btnPrint">인쇄</button>
+</div>
+<div class="panel" id="panel"></div>
+
+<div class="sheet"><div id="app"></div></div>
+
+<div class="dlg" id="dlg"><div class="in">
+  <b>AI가 준 JSON을 그대로 붙여 넣으세요</b>
+  <span style="color:#4A5260">처음(meta 포함)은 새로 시작, 이어서 받은 것(meta 없음)은 같은 번호만 교체·추가합니다.</span>
+  <textarea id="dlgText" spellcheck="false"></textarea>
+  <div class="r"><span class="msg" id="dlgMsg"></span><button type="button" id="dlgCancel">취소</button><button type="button" class="main" id="dlgOk">적용</button></div>
+</div></div>
+
+<!-- 데이터: 직접 고치지 않습니다. [데이터 붙여넣기]와 [저장]으로만 바뀝니다. -->
+<script type="application/json" id="data">
+{
+ "meta": {
+  "academy": "에이닷 영어학원 세종아름지점",
+  "stage": "AI 초안"
+ },
+ "groups": {},
+ "items": []
+}
+</script>
+<script>
+(function(){
+  /* ── 고정 목록: 수정 금지 ── */
+  const LIST = {
+    cat:    ["교과서","모의고사","부교재","외부지문","미확인"],
+    status: ["원문 확인","자료상 미확인","사용자 지정"],
+    type:   ["내용일치","빈칸","어휘","어법","순서","삽입","무관","주제","제목","요지","주장",
+             "함의추론","요약문","심경/분위기","도표","안내문","조건영작","T/F 복합"],
+    method: ["원문 그대로","발췌","어휘 바꿈","문장 구조 바꿈","패러프레이징","문장 추가","문장 삭제","순서 바꿈","형식 변환"],
+    factor: ["어휘·구문","추론 단계","선지 경쟁","변형 대응","답 쓰기 부담"],
+    tag:    ["선지 한글","선지 영어","복합 판단","점수 계산형","주체 바꾸기 함정","세부 수치 함정","조건 까다로움","시간 소모 큼"],
+    result: ["일치","불일치","미풀이"]
+  };
+  /* ── 고정 기준: 수정 금지 ── */
+  const LEVEL = r => r==null ? null : r<5 ? '없음' : r<25 ? '하' : r<75 ? '중' : '상';
+  const SUGGEST = n => n>=3 ? '상' : n>=1 ? '중' : '하';     // 난이도 요인 개수 → 제안 단계
+  const KILLER_MAX = 3;
+
+  let D = JSON.parse(document.getElementById('data').textContent);
+  let dirty = false, editing = null;
+  const app = document.getElementById('app');
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const dash = '<span class="none">—</span>';
+  const isSubj = no => /^서[답술]/.test(no);
+  const qLabel = no => isSubj(no) ? `서답형 ${String(no).replace(/^서[답술]형?\s*/,'')}` : `${no}번`;
+  const hasKo = s => /[가-힣]/.test(s||'');
+  const needKo = ch => (ch||[]).length && ch.some(c=>/[A-Za-z]{2,}/.test(c)) && !ch.some(hasKo);
+  const lines = s => String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+
+  /* ── 변형률 계산 (고정 공식) ──────────────────────────────
+     시험 지문의 단어마다, 그 단어를 포함한 연속 3단어가 원문에 그대로 있으면 '원문 단어',
+     없으면 '새 단어'. 변형률 = 새 단어 수 ÷ 시험 지문 전체 단어 수.
+     (A)·ⓐ·① 같은 기호와 빈칸 밑줄은 세지 않는다.                                   */
+  const WORD = /[A-Za-z]+(?:['’][A-Za-z]+)*/g;
+  const blankLabels = s => String(s||'').replace(/\(\s*[A-Ea-e]\s*\)/g, m => ' '.repeat(m.length));
+  function toks(s){ const out=[]; let m; const c = blankLabels(s); WORD.lastIndex=0;
+    while((m=WORD.exec(c))) out.push({w:m[0].toLowerCase().replace(/’/g,"'"), a:m.index, b:m.index+m[0].length});
+    return out; }
+  function grams(t){ const g=new Set(); for(let i=0;i+2<t.length;i++) g.add(t[i].w+' '+t[i+1].w+' '+t[i+2].w); return g; }
+  function cover(t, g){ return t.map((_,i)=>{ for(let k=i-2;k<=i;k++){ if(k<0||k+2>=t.length) continue;
+      if(g.has(t[k].w+' '+t[k+1].w+' '+t[k+2].w)) return true; } return false; }); }
+  function analyze(exam, orig){
+    if(!orig || !String(orig).trim() || !exam) return null;
+    const te = toks(exam), to = toks(orig); if(te.length<3) return null;
+    const cov = cover(te, grams(to)), newN = cov.filter(c=>!c).length;
+    return { rate: Math.round(newN/te.length*100), cov, te, to, used: cover(to, grams(te)) };
+  }
+  /* 새 단어 위치에 표시 기호(\u0001 … \u0002)를 넣는다. 밑줄·근거 기호를 넘지 않게 묶는다. */
+  function withNew(s, t, cov){
+    if(!t) return s; let out='', pos=0, i=0;
+    while(i<t.length){
+      if(cov[i]){ i++; continue; }
+      let j=i; while(j+1<t.length && !cov[j+1] && /^[ ,.;:!?'"“”‘’—–\-()]*$/.test(s.slice(t[j].b, t[j+1].a))) j++;
+      out += s.slice(pos, t[i].a) + '\u0001' + s.slice(t[i].a, t[j].b) + '\u0002'; pos = t[j].b; i = j+1;
+    }
+    return out + s.slice(pos);
+  }
+  const mark = s => esc(s)
+    .replace(/\[\[([\s\S]+?)\]\]/g,'<span class="ul">$1</span>')
+    .replace(/\*\*(?:([\w가-힣]+)\|)?([\s\S]+?)\*\*/g,(m,n,t)=>`<span class="basis">${n?`<sup>${qLabel(n)}</sup>`:''}${t}</span>`)
+    .replace(/\u0001/g,'<span class="chg">').replace(/\u0002/g,'</span>');
+
+  /* 문항 하나의 비교 대상: 문항 전용 지문이 있으면 그것, 없으면 공유 지문 */
+  function origOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.original || (g && g.original) || ''; }
+  function examOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.passage || (g && g.passage) || ''; }
+  function varOf(it){ const a = analyze(examOf(it), origOf(it)); return a ? {rate:a.rate, level:LEVEL(a.rate)} : null; }
+  const varText = v => v ? `${v.level} ${v.rate}%` : null;
+
+  /* 지문|해석 표: 줄 수가 같으면 한 줄씩, 다르면 통째로 나란히 */
+  function pairTable(en, ko, orig){
+    const a = analyze(en, orig);
+    const marked = a ? withNew(String(en), a.te, a.cov) : String(en);
+    const E = marked.split('\n').map(x=>x.trim()).filter(Boolean), K = lines(ko);
+    const talk = E.filter(l=>/^(\[|[^.!?:]{1,40}:)/.test(l)).length > E.length/2;
+    const para = `<div class="para passage en">${talk ? E.map(l=>`<p>${mark(l)}</p>`).join('') : `<p>${E.map(mark).join(' ')}</p>`}</div>`;
+    if(!K.length) return para;
+    if(E.length===K.length) return para + `<table class="pair withko"><tbody>${E.map((l,k)=>`<tr><td class="en">${mark(l)}</td><td class="ko">${mark(K[k])}</td></tr>`).join('')}</tbody></table>`;
+    return para + `<table class="pair split withko"><tbody><tr><td class="en">${E.map(mark).join('\n')}</td><td class="ko">${K.map(mark).join('\n')}</td></tr></tbody></table>`;
+  }
+  function origBlock(orig, exam, target){
+    if(!orig) return '';
+    const fixed = (D.meta.fixes||[]).filter(f=>f.target===target && (f.fields||['original']).includes('original'));
+    const a = analyze(exam, orig); let html = esc(orig);
+    if(a){ let s='', pos=0; a.to.forEach((t,k)=>{ s += esc(orig.slice(pos,t.a)) + (a.used[k] ? esc(orig.slice(t.a,t.b)) : `<span class="del">${esc(orig.slice(t.a,t.b))}</span>`); pos=t.b; }); html = s + esc(orig.slice(pos)); }
+    return `<details class="orig"><summary>원문 보기 · 출처 확인용(인쇄 안 됨) · 시험에 안 쓰인 부분은 회색${fixed.length?` · <span class="fixed">원문 수정됨 ${fixed.length}회</span>`:''}</summary>
+      <div class="t">${html.replace(/\n/g,'<br>')}</div><div class="obar"><span>AI가 원문을 잘못 옮겼으면 (예: its → his)</span><button type="button" data-eact="edit" data-t="${esc(target)}">원문 고치기</button></div></details>`;
+  }
+
+  /* ── 일람표 ── */
+  function listRow(it){
+    const e = it.eval||{}, v = varOf(it), s = it.source;
+    
+    const st = s && s.status && s.status!=='원문 확인' ? `<span class="st ${s.status==='사용자 지정'?'':'bad'}">${s.status==='사용자 지정'?'지정':'미확인'}</span>` : '';
+    return `<tr class="${e.killer?'killer':''}">
+      <td>${esc(qLabel(it.no))}</td><td class="g" title="${it.group?esc('['+it.group+'] 공유 지문'):''}">${it.group?esc(shortGroup(it.group)):''}</td><td>${esc(it.points)}</td><td>${longAns(it.answer)?'<span class="more">아래 표 ↓</span>':esc(it.answer||'')}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}${it.answerFix?'<span class="fxb">정정</span>':''}</td>
+      <td>${it.type?esc(it.type):dash}</td>
+      <td class="l">${s?st+esc(s.cat+(s.detail?' · '+s.detail:'')):dash}</td>
+      <td>${v?esc(varText(v)):dash}</td>
+      <td>${e.difficulty?esc(e.difficulty):dash}</td>
+      <td>${it.eval?(e.killer?'O':'X'):dash}</td></tr>`;
+  }
+
+  function seg(list, on, act, multi, sug){
+    return list.map(t => `<button type="button" class="${multi ? ((on||[]).includes(t)?'tag on':'tag') : ((on===t?'on ':'')+(sug===t?'sug':''))}" data-act="${act}" data-v="${esc(t)}">${esc(t)}</button>`).join('');
+  }
+  const unlocked = () => D.meta && D.meta.stage === '조교 확인 완료';
+  /* 정답 확인: AI 풀이와 다른 문항은 강사가 '학교 정답 유지' 또는 '정답 정정(근거 필수)'으로 마무리 */
+  const shortGroup = g => String(g).replace(/서[답술]형?\s*/g,'서').replace(/\s*,\s*/g,'·');
+  const longAns = a => { a = String(a||''); return !/^[①②③④⑤ⓐ-ⓔ,\s]*$/.test(a) && a.length > 8; };
+  const goto = (no, txt) => `<a class="goto" data-goto="${esc(no)}">${txt||esc(qLabel(no))}</a>`;
+  const needAns = it => !!(it.stem && it.answerCheck && it.answerCheck.result && it.answerCheck.result!=='일치' && !it.answerCheck.decision);
+  let fixingAns = null;
+  function fixAnswer(it, to, reason){
+    const ac = it.answerCheck = it.answerCheck||{};
+    const school = it.answerFix ? it.answerFix.school : it.answer;
+    it.answerFix = {school, to, reason, by: D.meta.reviewer||'강사', at: new Date().toISOString()};
+    it.answer = to; ac.decision = '정정';
+  }
+
+  /* ── 문항 카드 ── */
+  function qblock(it, i, inGroup){
+    const v = varOf(it), e = it.eval, s = it.source;
+    const ansIdx = '①②③④⑤'.indexOf(it.answer);
+    const cells = `
+      <div class="cell"><span class="k">배점</span><span class="v">${esc(it.points)}</span></div>
+      <div class="cell"><span class="k">정답</span><span class="v${longAns(it.answer)?' more':''}">${longAns(it.answer)?'아래 ↓':esc(it.answer)}</span></div>
+      <div class="cell"><span class="k">출처${s&&s.status&&s.status!=='원문 확인'?' · '+esc(s.status):''}</span><span class="v s">${s?esc(s.cat+(s.detail?' · '+s.detail:'')):'—'}</span></div>
+      <div class="cell"><span class="k">유형</span><span class="v">${esc(it.type||'—')}</span></div>
+      <div class="cell"><span class="k">변형률</span><span class="v">${v?`<span class="vchip ${v.rate<5?'x':''}">${esc(varText(v))}</span>`:'—'}</span></div>`;
+    const tgt = 'i:'+it.no, ebtn = `<button type="button" class="ebtn" data-eact="edit" data-t="${esc(tgt)}">고치기</button>`;
+    const head = `<header class="qhead">${ebtn}<div class="qno">${isSubj(it.no)?`서답<small>${esc(String(it.no).replace(/^서[답술]형?\s*/,''))}</small>`:esc(it.no)}</div><div class="cells">${cells}</div></header>`;
+    if(!it.stem) return `<div class="q">${head}<div class="pending">문항 데이터 없음</div></div>`;
+
+    const orig = origOf(it);
+    const own = it.passage ? pairTable(it.passage, it.passageKo, orig) : '';
+    const box = it.box ? `<div class="box">${pairTable(it.box, it.boxKo, '')}</div>` : '';
+    let choices = '';
+    if(it.choices && it.choices.length){
+      const ko = it.choicesKo||[], showKo = needKo(it.choices) && ko.length;
+      if(!showKo && it.choices.every(c=>String(c).length<=8)) choices = `<ol class="choices">${it.choices.map((c,k)=>`<li class="${k===ansIdx?'ans':''}"><span>${'①②③④⑤'[k]||''}</span> ${mark(c)}</li>`).join('')}</ol>`;
+      else choices = `<div class="choices-wrap"><table class="pair"><tbody>${it.choices.map((c,k)=>`<tr class="${k===ansIdx?'ans':''}"><td class="no">${'①②③④⑤'[k]||''}</td><td class="en"${showKo?'':' style="width:auto"'}>${mark(c)}</td>${showKo?`<td class="ko">${mark(ko[k]||'')}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+    }
+    const ac = it.answerCheck;
+    let acheck = '';
+    const fx = it.answerFix;
+    if(ac && ((ac.result && ac.result!=='일치') || fx)){
+      const info = `정답 대조 · 학교 정답${fx?'표':''} ${esc(fx?fx.school:it.answer)} / AI 풀이 ${esc(ac.ai||'—')} (${esc(ac.result||'—')})${ac.note?' — '+esc(ac.note):''}`;
+      const ii = `data-i="${i}"`;
+      if(!unlocked()) acheck = `<div class="acheck scr">${info}<br>→ 조교 확인 완료 후 강사가 [정답 확인]으로 마무리합니다</div>`;
+      else if(ac.decision==='정정' && fx) acheck = `<div class="acheck ok scr">정답 정정 완료 · 학교 정답표 <b>${esc(fx.school)}</b> → <b>${esc(fx.to)}</b><br>근거: ${esc(fx.reason)} (${esc(fx.by)})
+        <div class="ab"><button type="button" data-aact="undo" ${ii}>정정 되돌리기</button></div></div>`;
+      else if(ac.decision==='유지') acheck = `<div class="acheck ok scr">${info}<br>→ 강사 확인: 학교 정답 유지 (${esc(ac.by||'강사')})
+        <div class="ab"><button type="button" data-aact="reopen" ${ii}>다시 확인</button></div></div>`;
+      else if(fixingAns===it.no) acheck = `<div class="acheck scr" data-afix="${i}">${info}
+        <div class="af"><span>정정 정답</span><input data-af="to" value="${esc(ac.ai||it.answer||'')}">
+        <span>정정 근거</span><textarea data-af="reason" rows="2" placeholder="예: 원문 11번이 stinging이고, 조건이 '어형 변화 필수'임 (필수)"></textarea></div>
+        <div class="ab"><button type="button" data-aact="cancel" ${ii}>취소</button><button type="button" class="main" data-aact="save" ${ii}>정정 저장</button></div></div>`;
+      else acheck = `<div class="acheck scr">${info}<br>→ 강사가 직접 풀어 보고 하나를 고르세요
+        <div class="ab"><button type="button" data-aact="keep" ${ii}>학교 정답 유지</button><button type="button" class="main" data-aact="fix" ${ii}>정답 정정…</button></div></div>`;
+    }
+    const afix = fx ? `<div class="afix">※ 정답 정정 · 학교 정답표: ${esc(fx.school)} → ${esc(fx.to)} (${esc(fx.reason)})</div>` : '';
+    const basis = it.basis ? `<div class="basis-box"><b>답 근거</b>${mark(it.basis)}</div>` : '';
+    const methods = (it.methods&&it.methods.length) ? `<div class="methods"><span class="k">변형 방식</span>${it.methods.map(m=>`<span class="m">${esc(m)}</span>`).join('')}</div>` : '';
+    /* v3.3: 변형 대조 표 삭제 (형광펜·원문 보기로 대신함). 예전 파일의 contrast 값은 무시 */
+    let evalBox = '';
+    if(e){
+      const sug = SUGGEST((e.factors||[]).length), off = e.difficulty && e.difficulty!==sug;
+      const ai = e.ai, changed = ai && (ai.difficulty!==e.difficulty || ai.killer!==e.killer);
+      evalBox = `
+      <div class="eval ${unlocked()?'':'locked'}" data-i="${i}">
+        ${unlocked()?'':'<p class="lock-note">조교 확인 완료 후 강사가 평가합니다 (지금은 AI 초안)</p>'}
+        <div class="eval-h"><span class="t">문항 평가</span>
+          ${changed?`<span class="aidraft">AI 초안: ${esc(ai.difficulty||'—')} · 킬러 ${ai.killer?'O':'X'}</span>`:''}
+          <button type="button" class="status ${e.status==='done'?'done':''}" data-act="status">${e.status==='done'?'검수 완료':'검수 전'}</button></div>
+        <div class="row" style="align-items:flex-start"><span class="k">난이도 요인</span>
+          <div class="tags">${seg(LIST.factor, e.factors, 'factor', true)}</div></div>
+        <div class="row"><span class="k">난이도</span>
+          <div class="seg">${seg(['상','중','하'], e.difficulty, 'diff', false, sug)}</div>
+          <span class="k" style="margin-left:18px;width:auto">킬러</span>
+          <div class="seg">${[['O',true],['X',false]].map(([t,b])=>`<button type="button" class="${e.killer===b?'on':''}" data-act="killer" data-v="${b}">${t}</button>`).join('')}</div>
+        </div>
+        ${off?`<div class="row"><span class="k">다르게 고른 이유</span><div class="reason" contenteditable="true" data-act="reason" data-ph="요인 ${(e.factors||[]).length}개 → 제안 '${sug}'. 다르게 고른 이유를 한 줄로 적어 주세요">${esc(e.reason||'')}</div></div>`:''}
+        <div class="row" style="align-items:flex-start"><span class="k">특이사항</span>
+          <div class="tags">${seg(LIST.tag, e.tags, 'tag', true)}</div></div>
+        <div class="memo" contenteditable="true" data-act="memo">${esc(e.memo||'')}</div>
+      </div>`;
+    }
+    const tag = inGroup ? 'div' : 'article';
+    if(editing===tgt) return `<${tag} class="${inGroup?'q':'card'} editing">${head}${editForm(tgt)}</${tag}>`;
+    const ansbar = longAns(it.answer) ? `<div class="ansbar"><span class="k">정답${isSubj(it.no)?' (모범답안)':''}</span><span class="en">${esc(it.answer)}</span></div>` : '';
+    return `<${tag} class="${inGroup?'q':'card'}" id="q-${esc(it.no)}">${head}
+      ${ansbar}${afix}${acheck}
+      <p class="stem">${esc(it.stem)}</p>
+      ${own}${box}${choices}${basis}${methods}${it.passage?origBlock(orig, it.passage, it.original?'i:'+it.no:'g:'+it.group):''}${evalBox}
+    </${tag}>`;
+  }
+
+  function cards(){
+    const items = D.items, groups = D.groups||{}, out = [];
+    for(let i=0;i<items.length;i++){
+      const it = items[i];
+      if(it.group){
+        const g = groups[it.group]||{}, idx=[];
+        while(i<items.length && items[i].group===it.group){ idx.push(i); i++; } i--;
+        out.push(`<article class="card group">
+          <div class="gbar"><b>[${esc(it.group)}]</b><span>지문 공유 · ${idx.map(k=>esc(qLabel(items[k].no))).join(', ')}</span><button type="button" class="ebtn" data-eact="edit" data-t="${esc('g:'+it.group)}">공유 지문 고치기</button></div>
+          ${editing==='g:'+it.group ? editForm('g:'+it.group) : `<p class="stem">${esc(g.stem||'')}</p>
+          ${g.passage?`<div class="shared">${pairTable(g.passage, g.passageKo, g.original)}</div>${origBlock(g.original, g.passage, 'g:'+it.group)}`:'<div class="pending">공유 지문 데이터 없음</div>'}`}
+          ${idx.map(k=>qblock(items[k],k,true)).join('')}
+        </article>`);
+      } else out.push(qblock(it,i,false));
+    }
+    return out.join('');
+  }
+
+  /* ── 검수 패널 (화면 전용) ── */
+  function panel(){
+    const items = D.items||[], m = D.meta||{}, groups = D.groups||{};
+    const A = [], T = [];                       // A: 조교 확인, T: 강사 확인
+    const nos = a => a.map(i=>qLabel(i.no)).join(', ');
+    const pts = Math.round(items.reduce((s,i)=>s+(Number(i.points)||0),0)*10)/10;
+    A.push([Math.abs(pts-100)<0.05?'ok':'bad', `문항 ${items.length}개 · 배점 합계 ${pts}점${Math.abs(pts-100)<0.05?'':' → 시험지 문항이 다 들어왔는지, 배점이 맞는지 확인'}`]);
+    A.push([m.answerChecked?'ok':'bad', '일람표의 배점·정답을 학교 정답표와 한 줄씩 대조하기 (아래 체크)']);
+    const pairs = (en, ko) => lines(en).length===lines(ko).length;
+    const marks = s => { s=String(s||''); return (s.match(/\*\*/g)||[]).length%2===0 && (s.match(/\[\[/g)||[]).length===(s.match(/\]\]/g)||[]).length; };
+    Object.keys(groups).forEach(k => { const g = groups[k];
+      if(g.passage && !pairs(g.passage, g.passageKo)) A.push(['bad', `[${k}] 공유 지문 ${lines(g.passage).length}줄 / 해석 ${lines(g.passageKo).length}줄 → AI에게 "해석 줄 수를 지문과 맞춰 다시"`]);
+      if(!marks(g.passage)) A.push(['bad', `[${k}] 공유 지문의 ** 또는 [[ ]] 짝이 맞지 않음 → AI에게 다시 요청`]); });
+    items.forEach(it => { const L = qLabel(it.no), s = it.source||{};
+      if(!it.stem){ A.push(['bad', `${L} 문항 데이터 없음`]); return; }
+      if(it.type && !LIST.type.includes(it.type)) A.push(['bad', `${L} 유형 "${esc(it.type)}"는 목록에 없음`]);
+      if(!LIST.cat.includes(s.cat)) A.push(['bad', `${L} 출처 "${esc(s.cat)}"는 목록에 없음`]);
+      if(!LIST.status.includes(s.status)) A.push(['bad', `${L} 근거 상태 "${esc(s.status)}"는 목록에 없음`]);
+      (it.methods||[]).forEach(x=>{ if(!LIST.method.includes(x)) A.push(['bad', `${L} 변형 방식 "${esc(x)}"는 목록에 없음`]); });
+      if(it.eval){ (it.eval.factors||[]).forEach(f=>{ if(!LIST.factor.includes(f)) A.push(['bad', `${L} 난이도 요인 "${esc(f)}"는 목록에 없음`]); });
+        (it.eval.tags||[]).forEach(t=>{ if(!LIST.tag.includes(t)) A.push(['bad', `${L} 특이사항 "${esc(t)}"는 목록에 없음`]); }); }
+      if(s.status==='원문 확인' && !origOf(it)) A.push(['bad', `${L} '원문 확인'인데 원문(original)이 비어 있음`]);
+      if(it.box && it.boxKo && !pairs(it.box, it.boxKo)) A.push(['bad', `${L} 보기 상자 ${lines(it.box).length}줄 / 해석 ${lines(it.boxKo).length}줄`]);
+      if(it.passage && !pairs(it.passage, it.passageKo)) A.push(['bad', `${L} 지문 ${lines(it.passage).length}줄 / 해석 ${lines(it.passageKo).length}줄 → AI에게 "해석 줄 수를 지문과 맞춰 다시"`]);
+      if(needKo(it.choices) && (it.choicesKo||[]).length!==it.choices.length) A.push(['bad', `${L} 선지 해석 개수가 선지와 다름`]);
+      if(!it.basis) A.push(['bad', `${L} 답 근거가 비어 있음`]);
+      if(!marks(it.passage)) A.push(['bad', `${L} 지문의 ** 또는 [[ ]] 짝이 맞지 않음 → AI에게 다시 요청`]);
+    });
+    if(A.length===2 && A[0][0]==='ok' && A[1][0]==='ok') A.push(['ok','조교 확인 항목 이상 없음']);
+
+    const ans = items.filter(needAns);
+    if(ans.length) T.push(['bad', `AI 풀이와 학교 정답이 다르거나 못 푼 문항: ${ans.map(i=>goto(i.no)).join(', ')} → 누르면 그 카드로 이동합니다. 카드 맨 위 상자에서 [학교 정답 유지] 또는 [정답 정정…]`]);
+    const afx = items.filter(i=>i.answerFix);
+    if(afx.length) T.push(['info', `정답 정정 ${afx.length}문항: ${afx.map(i=>`${goto(i.no)}(학교 정답표 ${esc(i.answerFix.school)} → ${esc(i.answerFix.to)})`).join(', ')} · 인쇄본에 정정 표시가 함께 나갑니다`]);
+    const unk = items.filter(i=>i.source && (i.source.cat==='미확인' || i.source.status==='자료상 미확인'));
+    if(unk.length) T.push(['warn', `출처를 자료에서 못 찾은 문항: ${nos(unk)} → 외부지문이면 출처 '외부지문', 상태 '사용자 지정'`]);
+    const ext = items.filter(i=>i.source && i.source.cat==='외부지문' && i.source.status!=='사용자 지정');
+    if(ext.length) T.push(['bad', `외부지문은 강사가 확인해 '사용자 지정'으로 둡니다: ${nos(ext)}`]);
+    const hi = items.filter(i=>{ const v=varOf(i); return v && v.rate>=95; });
+    if(hi.length) T.push(['warn', `변형률 95% 이상: ${nos(hi)} → '원문 보기'에서 같은 글이 맞는지 확인`]);
+    const noReason = items.filter(i=>i.eval && i.eval.difficulty && i.eval.difficulty!==SUGGEST((i.eval.factors||[]).length) && !(i.eval.reason||'').trim());
+    if(noReason.length) T.push(['bad', `난이도를 제안과 다르게 골랐는데 이유가 없음: ${nos(noReason)}`]);
+    const killers = items.filter(i=>i.eval && i.eval.killer);
+    if(killers.length>KILLER_MAX) T.push(['warn', `킬러 ${killers.length}문항(${nos(killers)}) → ${KILLER_MAX}문항을 넘으면 기준을 다시 검토`]);
+    const draft = items.filter(i=>i.eval && i.eval.status!=='done');
+    if(draft.length) T.push(['warn', `검수 전 ${draft.length}문항: ${nos(draft)} — 이 상태로 인쇄하지 않기`]);
+    if(!m.reviewer) T.push(['warn','검수 강사 이름이 비어 있음']);
+    const fx = [...new Set((m.fixes||[]).map(f=>f.target))];
+    if(fx.length) T.push(['info', `직접 고친 곳 ${fx.length}곳: ${fx.map(t=>t.startsWith('g:')?'['+t.slice(2)+'] 공유 지문':qLabel(t.slice(2))).join(', ')}`]);
+    if(editing) T.unshift(['bad','고치는 중인 카드가 있습니다 → [저장] 또는 [취소]']);
+    if(!T.filter(x=>x[0]!=='info').length) T.push(['ok','강사 확인 항목 이상 없음']);
+
+    const icon = {ok:'✓',bad:'✕',warn:'!',info:'·'};
+    const list = a => `<div class="chk">${a.map(([l,t])=>`<span class="i ${l}">${icon[l]}</span><span>${t}</span>`).join('')}</div>`;
+    $('panel').innerHTML = `<h2>검수 패널<small>화면에만 보이고 인쇄되지 않습니다</small></h2>
+      <div class="who">조교 <input id="inAsst" value="${esc(m.assistant||'')}" placeholder="이름"> 검수 강사 <input id="inRev" value="${esc(m.reviewer||'')}" placeholder="이름">
+        <span class="stage">단계: ${esc(m.stage||'AI 초안')}</span></div>
+      ${m.lastFile?`<p class="saved">마지막 저장 파일: <b>${esc(m.lastFile)}</b> (다운로드 폴더)${dirty?' · <span class="unsaved">저장 후 바뀐 내용 있음</span>':''}</p>`:''}
+      <div class="cols">
+        <div><h3>① 조교 확인<small>✕를 모두 없앤 뒤 [조교 확인 완료]</small></h3>${list(A)}
+          <label class="ck"><input type="checkbox" id="ckAns" ${m.answerChecked?'checked':''}> 배점·정답을 학교 정답표와 모두 대조했습니다</label></div>
+        <div><h3>② 강사 확인<small>조교 확인 완료 후</small></h3>${list(T)}</div>
+      </div>`;
+    $('inAsst').onchange = ev => { D.meta.assistant = ev.target.value.trim(); dirty=true; render(); };
+    $('inRev').onchange = ev => { D.meta.reviewer = ev.target.value.trim(); dirty=true; render(); };
+    $('ckAns').onchange = ev => { D.meta.answerChecked = ev.target.checked; dirty=true; render(); };
+    return { a: A.filter(o=>o[0]==='bad').length, t: T.filter(o=>o[0]==='bad').length };
+  }
+
+  function render(){
+    if(dirty) autosave();
+    D.meta = D.meta||{}; D.items = D.items||[];
+    const m = D.meta, items = D.items;
+    const withCard = items.filter(it => it.stem);
+    const done = withCard.filter(it => it.eval && it.eval.status==='done').length;
+    const bad = panel();
+    document.title = m.school ? `${m.school} ${m.grade} ${m.exam} 심화분석` : '내신 심화분석';
+    $('progress').textContent = !items.length ? '데이터를 붙여 넣어 시작하세요' :
+      `문항 ${withCard.length}개 · 조교 확인 남음 ${bad.a} · 강사 확인 남음 ${bad.t} · 검수 완료 ${done}/${withCard.length}`;
+    document.body.classList.toggle('noko', !m.printKo); $('ckKo').checked = !!m.printKo;
+    const bt = $('btnAsst'); bt.style.display = unlocked() ? 'none' : ''; bt.disabled = !items.length || bad.a>0;
+    if(!items.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[데이터 붙여넣기]를 눌러 AI가 준 JSON을 넣어 주세요.</div>`; return; }
+    app.innerHTML = `
+      <table class="frame">
+        <thead><tr><td><div class="run"><b>${esc(m.academy)} · 내신 심화분석</b><span>${esc(m.school)} ${esc(m.grade)} ${esc(m.exam)}</span></div></td></tr></thead>
+        <tfoot><tr><td></td></tr></tfoot>
+        <tbody><tr><td>
+          <section class="cover">
+            <h1>${esc(m.school)} ${esc(m.grade)} · ${esc(m.exam)} 심화분석</h1>
+            <p class="range">${esc(m.range)} &nbsp;|&nbsp; ${esc(m.date)}${m.reviewer?` &nbsp;|&nbsp; 검수 ${esc(m.reviewer)}`:''}</p>
+            <div class="bar"></div>
+            <div class="legend">
+              <span><span class="chg en">highlight</span> 원문에 없는 새 표현</span>
+              <span><span class="ul en">underline</span> 시험지 밑줄</span>
+              <span><span class="basis en">evidence</span> 정답 근거</span>
+              <span>변형률 · 시험 지문 중 새 표현의 비율 (없음 5% 미만 / 하 5~25% / 중 25~75% / 상 75% 이상)</span>
+            </div>
+            <table class="list"><thead><tr><th>문항</th><th>지문</th><th>배점</th><th>정답</th><th>유형</th><th>출처</th><th>변형률</th><th>난이도</th><th>킬러</th></tr></thead>
+              <tbody>${items.map(listRow).join('')}</tbody></table>
+            ${(()=>{ const L = items.filter(it=>longAns(it.answer)); return L.length ? `<table class="ans"><caption>서답형 정답 (모범답안)</caption><thead><tr><th>문항</th><th>배점</th><th>정답</th></tr></thead><tbody>${
+              L.map(it=>`<tr><td>${esc(qLabel(it.no))}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}</td><td>${esc(it.points)}</td><td class="a en">${esc(it.answer)}${it.answerFix?'<span class="fxb">정정</span>':''}</td></tr>`).join('')}</tbody></table>` : ''; })()}
+            <div class="count">지문 열은 같은 지문을 쓰는 문항 묶음 (서3 = 서답형 3) · 킬러 문항은 굵게 표시 · 문항별 상세는 다음 쪽부터</div>
+          </section>
+          <section class="cards">${cards()}</section>
+        </td></tr></tbody>
+      </table>`;
+  }
+  const keep = fn => { const y = window.scrollY; fn(); dirty = true; render(); window.scrollTo(0,y); };
+
+  app.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-act]'); if(!b || !unlocked()) return;
+    const e = D.items[+b.closest('.eval').dataset.i].eval, a = b.dataset.act;
+    const toggle = (k, t) => { e[k] = e[k]||[]; e[k] = e[k].includes(t) ? e[k].filter(x=>x!==t) : [...e[k], t]; };
+    keep(() => {
+      if(a==='status'){ e.status = e.status==='done' ? 'draft' : 'done'; return; }
+      if(a==='diff') e.difficulty = b.dataset.v;
+      if(a==='killer') e.killer = b.dataset.v==='true';
+      if(a==='tag') toggle('tags', b.dataset.v);
+      if(a==='factor') toggle('factors', b.dataset.v);
+      e.status = 'done';
+    });
+  });
+  /* ── 고치기: JSON을 열지 않고 카드 내용을 직접 수정 (강사·조교 공통) ── */
+  const lines2 = a => (a||[]).join('\n');
+  const opt = (list, v) => list.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('') + (v && !list.includes(v) ? `<option selected>${esc(v)}</option>` : '');
+  const ta = (f, v, ph, rows) => `<textarea data-f="${f}" rows="${rows||3}" placeholder="${esc(ph||'')}" spellcheck="false">${esc(v||'')}</textarea>`;
+  const fld = (label, html, wide) => `<label class="ef${wide?' w':''}"><span>${label}</span>${html}</label>`;
+  function editForm(target){
+    const isG = target.startsWith('g:'), key = target.slice(2);
+    const o = isG ? (D.groups||{})[key] : D.items.find(i=>String(i.no)===key); if(!o) return '';
+    const s = o.source||{};
+    let h = '';
+    if(!isG){
+      const la = longAns(o.answer);
+      h += `<div class="er${la?' noans':''}">${fld('배점',`<input data-f="points" value="${esc(o.points)}">`)}${la?'':fld('정답',`<input data-f="answer" value="${esc(o.answer)}">`)}
+        ${fld('유형',`<select data-f="type">${opt(LIST.type,o.type)}</select>`)}${fld('출처',`<select data-f="source.cat">${opt(LIST.cat,s.cat)}</select>`)}
+        ${fld('근거 상태',`<select data-f="source.status">${opt(LIST.status,s.status)}</select>`)}</div>
+        ${fld('출처 상세',`<input data-f="source.detail" value="${esc(s.detail||'')}">`,true)}
+        ${la?fld('정답 (모범답안)', ta('answer',o.answer,'',2), true):''}`;
+    }
+    h += fld('발문',`<input data-f="stem" value="${esc(o.stem||'')}">`,true);
+    h += `<div class="er2">${fld('지문 (한 줄에 한 문장)', ta('passage',o.passage,'',8))}${fld('지문 해석 (지문과 줄 수 같게)', ta('passageKo',o.passageKo,'',8))}</div>`;
+    if(!isG){
+      h += `<div class="er2">${fld('보기 상자', ta('box',o.box,'없으면 비워 둠',2))}${fld('보기 상자 해석', ta('boxKo',o.boxKo,'',2))}</div>
+        <div class="er2">${fld('선지 (한 줄에 하나, ① 없이)', ta('choices',lines2(o.choices),'',5))}${fld('선지 해석 (영어 선지만)', ta('choicesKo',lines2(o.choicesKo),'',5))}</div>
+        ${fld('답 근거', ta('basis',o.basis,'',3),true)}
+        ${fld('변형 방식', `<div class="ck">${LIST.method.map(m=>`<label><input type="checkbox" data-f="methods" value="${esc(m)}"${(o.methods||[]).includes(m)?' checked':''}> ${esc(m)}</label>`).join('')}</div>`, true)}
+`;
+    }
+    if(isG || o.original || !o.group) h += fld('원문 (원문 PDF와 한 글자씩 대조)', ta('original',o.original,'',6), true);
+    else h += `<p class="enote">이 문항의 원문은 [${esc(o.group)}] 공유 지문의 [고치기]에서 고칩니다.</p>`;
+    return `<div class="eform" data-t="${esc(target)}"><div class="eh"><b>고치기</b><span>[[밑줄]], **근거** 표시는 그대로 두세요 · 정답 칸은 학교 정답표를 잘못 옮겼을 때만 고칩니다 (정답표 자체의 오류는 카드의 [정답 정정])</span>
+      <button type="button" data-eact="cancel">취소</button><button type="button" class="main" data-eact="save">저장</button></div>${h}</div>`;
+  }
+  function saveForm(form){
+    const target = form.dataset.t, isG = target.startsWith('g:'), key = target.slice(2);
+    const o = isG ? D.groups[key] : D.items.find(i=>String(i.no)===key), changed = [];
+    const val = f => { const el = form.querySelector(`[data-f="${f}"]`); return el ? el.value : undefined; };
+    const set = (f, v) => { const ks = f.split('.'); let t = o; if(ks.length>1){ t = o[ks[0]] = o[ks[0]]||{}; }
+      const k = ks[ks.length-1]; if(JSON.stringify(t[k]??'') !== JSON.stringify(v)){ t[k] = v; changed.push(f); } };
+    ['stem','passage','passageKo','original'].forEach(f=>{ const v = val(f); if(v!==undefined) set(f, v.trim()); });
+    if(!isG){
+      const prevAns = o.answer;
+      ['points','answer','type','source.cat','source.status','source.detail','basis','box','boxKo'].forEach(f=>{ let v = val(f); if(v===undefined) return; v = v.trim(); if(f==='points' && v!=='' && !isNaN(v)) v = Number(v); if(f==='answer') v = v.replace(/\s*\n\s*/g,' '); set(f, v); });
+      if(o.answer!==prevAns && unlocked()){
+        const why = (prompt(`정답을 ${prevAns} → ${o.answer}(으)로 바꿉니다.\n학교 정답표를 잘못 옮긴 것이면 [취소] 없이 '대조 오류'라고, 정답표 자체가 틀렸으면 근거를 적어 주세요.`, '대조 오류')||'').trim();
+        if(!why){ o.answer = prevAns; changed.splice(changed.indexOf('answer'),1); }
+        else if(why!=='대조 오류'){ const to = o.answer; o.answer = prevAns; fixAnswer(o, to, why); }
+      }
+      set('choices', lines(val('choices'))); set('choicesKo', lines(val('choicesKo')));
+      set('methods', [...form.querySelectorAll('[data-f="methods"]:checked')].map(x=>x.value));
+      delete o.contrast;
+      if(o.box==='') { delete o.box; delete o.boxKo; }
+    }
+    if(changed.length){ D.meta.fixes = D.meta.fixes||[];
+      D.meta.fixes.push({target, fields:changed, at:new Date().toISOString(), by: unlocked() ? (D.meta.reviewer||'강사') : (D.meta.assistant||'조교')}); dirty = true; }
+  }
+  app.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-eact]'); if(!b) return;
+    const act = b.dataset.eact, y = window.scrollY;
+    if(act==='edit'){ if(editing && !confirm('고치던 카드가 있습니다. 저장하지 않고 다른 카드를 열까요?')) return; editing = b.dataset.t; }
+    if(act==='save') saveForm(b.closest('.eform'));
+    if(act==='save' || act==='cancel') editing = null;
+    render(); window.scrollTo(0,y);
+  });
+  app.addEventListener('focusout', ev => {
+    const act = ev.target.dataset && ev.target.dataset.act; if(act!=='memo' && act!=='reason') return;
+    const e = D.items[+ev.target.closest('.eval').dataset.i].eval, t = ev.target.innerText.trim();
+    if(t !== (e[act]||'').trim()) keep(() => { e[act] = t; e.status = 'done'; });
+  });
+
+  app.addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-aact]'); if(!b) return;
+    const it = D.items[+b.dataset.i], ac = it.answerCheck = it.answerCheck||{}, act = b.dataset.aact, y = window.scrollY;
+    if(act==='fix'){ fixingAns = it.no; }
+    else if(act==='cancel'){ fixingAns = null; }
+    else if(act==='keep'){ ac.decision = '유지'; ac.by = D.meta.reviewer||'강사'; dirty = true; }
+    else if(act==='reopen'){ delete ac.decision; delete ac.by; dirty = true; }
+    else if(act==='undo'){ if(!confirm('정정을 되돌리고 학교 정답표 값으로 돌아갈까요?')) return;
+      it.answer = it.answerFix.school; delete it.answerFix; delete ac.decision; dirty = true; }
+    else if(act==='save'){
+      const f = b.closest('[data-afix]'), to = f.querySelector('[data-af="to"]').value.trim(), why = f.querySelector('[data-af="reason"]').value.trim();
+      if(!to){ alert('정정 정답을 적어 주세요.'); return; }
+      if(!why){ alert('정정 근거를 적어 주세요. (예: 원문 몇 번 문장, 조건 등)'); return; }
+      fixAnswer(it, to, why); fixingAns = null; dirty = true;
+      D.meta.fixes = D.meta.fixes||[]; D.meta.fixes.push({target:'i:'+it.no, fields:['answer'], at:new Date().toISOString(), by:D.meta.reviewer||'강사'});
+    }
+    render(); window.scrollTo(0,y);
+  });
+
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest('a.goto'); if(!a) return; ev.preventDefault();
+    const el = document.getElementById('q-'+a.dataset.goto); if(!el) return;
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    const box = el.querySelector('.acheck') || el; box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash');
+  });
+
+  /* AI 초안 보관: 처음 들어온 평가를 eval.ai 에 남겨 강사 수정과 비교 */
+  const snap = it => { if(it.eval && !it.eval.ai) it.eval.ai = {difficulty:it.eval.difficulty, killer:!!it.eval.killer, factors:[...(it.eval.factors||[])]}; };
+  const order = no => isSubj(no) ? 1000 + (parseInt(String(no).replace(/\D/g,''))||0) : (parseInt(no)||0);
+
+  /* 데이터 붙여넣기: meta가 있으면 새 시험으로 시작, 없으면 같은 번호만 교체·추가 */
+  const dlg = $('dlg');
+  $('btnPaste').onclick = () => { $('dlgText').value=''; $('dlgMsg').textContent=''; dlg.classList.add('on'); $('dlgText').focus(); };
+  $('dlgCancel').onclick = () => dlg.classList.remove('on');
+  $('dlgOk').onclick = () => {
+    let t = $('dlgText').value.trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+    const a = t.indexOf('{'), b = t.lastIndexOf('}'); if(a>=0 && b>a) t = t.slice(a, b+1);
+    try{
+      const nd = JSON.parse(t);
+      if(!Array.isArray(nd.items)) throw new Error('items가 없습니다');
+      if(nd.meta && D.items.length && !confirm('meta가 들어 있는 데이터입니다. 지금 내용을 지우고 새로 시작할까요?\n(이어서 붙이는 중이면 [취소] 후 AI에게 meta 없이 다시 달라고 하세요)')) return;
+      if(nd.meta){ D = {meta: Object.assign({stage:'AI 초안'}, nd.meta), groups: nd.groups||{}, items: []}; }
+      if(nd.groups) D.groups = Object.assign(D.groups||{}, nd.groups);
+      nd.items.forEach(ni => { snap(ni); const k = D.items.findIndex(x => String(x.no)===String(ni.no));
+        if(k>=0){ const old = D.items[k]; if(old.eval && old.eval.status==='done') ni.eval = old.eval; D.items[k] = ni; } else D.items.push(ni); });
+      D.items.sort((x,y)=>order(x.no)-order(y.no));
+      dlg.classList.remove('on'); dirty = true; render();
+    }catch(e){ $('dlgMsg').textContent = '읽을 수 없는 JSON입니다: ' + e.message; }
+  };
+
+  $('btnAsst').onclick = () => {
+    if(!D.meta.assistant){ const n = prompt('조교 이름을 적어 주세요'); if(!n) return; D.meta.assistant = n.trim(); }
+    if(!confirm('조교 확인을 완료하고 강사에게 넘길까요?\n완료 후 [저장]한 파일을 강사에게 전달하세요.')) return;
+    D.meta.stage = '조교 확인 완료'; dirty = true; render();
+  };
+  $('ckKo').onchange = ev => { D.meta.printKo = ev.target.checked; dirty = true; render(); };
+  $('btnPrint').onclick = () => window.print();
+  $('btnSave').onclick = () => {
+    const a = document.activeElement; if(a && a.blur) a.blur();
+    D.meta.savedAt = new Date().toISOString();
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = '';
+    clone.querySelector('#dlg').classList.remove('on');
+    clone.querySelector('#data').textContent = '\n' + JSON.stringify(D, null, 1).replace(/<\//g,'<\\/') + '\n';
+    const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html'});
+    const url = URL.createObjectURL(blob), link = document.createElement('a'), m = D.meta;
+    const stage = m.stage==='조교 확인 완료' ? (D.items.every(i=>!i.eval||i.eval.status==='done') ? '검수완료' : '강사검수중') : '조교작업중';
+    link.href = url; link.download = [m.school,m.grade,m.exam].filter(Boolean).join('_').replace(/\s+/g,'_') + `_심화분석_${stage}.html`;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000); dirty = false;
+    D.meta.lastFile = link.download; autosave(); render();
+    alert(`저장했습니다: ${link.download}\n\n· 이 파일은 컴퓨터의 '다운로드' 폴더에 새로 생깁니다. 처음 연 템플릿 파일은 바뀌지 않습니다.\n· 강사에게 넘길 때는 이 파일을 카톡·구글 드라이브 등으로 보내 주세요.\n· 받은 사람은 이 파일을 더블클릭해 열거나, 빈 템플릿에서 [파일 불러오기]로 엽니다.`);
+  };
+  /* 자동 보관: 같은 컴퓨터·같은 브라우저에서 창을 닫았다 다시 열 때 이어서 작업 */
+  const AKEY = 'adot-simhwa-v3';
+  const examKey = d => [d.meta&&d.meta.school, d.meta&&d.meta.grade, d.meta&&d.meta.exam].join('|');
+  function autosave(){ try{ if(!D.items.length) return; const all = JSON.parse(localStorage.getItem(AKEY)||'{}');
+      all[examKey(D)] = {at: new Date().toISOString(), data: D}; localStorage.setItem(AKEY, JSON.stringify(all)); }catch(e){} }
+  function restoreOffer(){ try{
+      const all = JSON.parse(localStorage.getItem(AKEY)||'{}');
+      let cand = null;
+      if(D.items.length){ const c = all[examKey(D)]; if(c && (!D.meta.savedAt || c.at > D.meta.savedAt) && JSON.stringify(c.data)!==JSON.stringify(D)) cand = c; }
+      else { Object.values(all).forEach(c => { if(!cand || c.at > cand.at) cand = c; }); }
+      if(cand && confirm(`이 컴퓨터에 자동 보관된 작업이 있습니다.\n${[cand.data.meta.school,cand.data.meta.grade,cand.data.meta.exam].join(' ')} · ${new Date(cand.at).toLocaleString()}\n\n이어서 작업할까요?`)){ D = cand.data; dirty = true; }
+    }catch(e){} }
+  /* 파일 불러오기: 저장한 HTML 파일(또는 JSON)을 빈 템플릿에서 열기 */
+  $('btnLoad').onclick = () => $('fileIn').click();
+  $('fileIn').onchange = ev => { const f = ev.target.files[0]; if(!f) return; const r = new FileReader();
+    r.onload = () => { try{
+        let t = String(r.result), nd;
+        if(/<html/i.test(t)){ const doc = new DOMParser().parseFromString(t,'text/html'), el = doc.getElementById('data'); if(!el) throw new Error('심화분석지 파일이 아닙니다'); nd = JSON.parse(el.textContent); }
+        else nd = JSON.parse(t);
+        if(!nd.meta || !Array.isArray(nd.items)) throw new Error('심화분석지 데이터가 없습니다');
+        if(D.items.length && !confirm('지금 화면의 내용을 지우고 불러온 파일로 바꿀까요?')) return;
+        D = nd; D.items.forEach(snap); dirty = false; render(); autosave();
+      }catch(e){ alert('불러올 수 없습니다: ' + e.message); } ev.target.value=''; };
+    r.readAsText(f, 'utf-8'); };
+  window.addEventListener('beforeunload', ev => { if(dirty){ ev.preventDefault(); ev.returnValue=''; } });
+
+  D.items = D.items||[]; D.items.forEach(snap);
+  restoreOffer(); D.items.forEach(snap);
+  render();
+})();
+</script>
+</body>
+</html>

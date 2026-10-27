@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<!--
+  에이닷 내신 분석실 (세종아름) · 안내 사이트
+  - 안내 문구·버전·프롬프트: assets/content.js
+  - 템플릿 파일: tools/simhwa.html, tools/trend.html (교체 후 content.js의 버전 숫자도 올림)
+  - 화면 구조: 이 파일 / 디자인: assets/hub.css / 동작: assets/hub.js
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>에이닷 내신 분석실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/hub.css">
+</head>
+<body>
+
+<header class="hdr" id="hdr">
+  <div class="hdr-in">
+    <a class="brand" href="#guide" aria-label="안내로 가기">
+      <span class="mark" aria-hidden="true">A</span>
+      <span class="bt"><b>에이닷 내신 분석실</b><small>세종아름지점</small></span>
+    </a>
+    <nav class="tabs" aria-label="메뉴">
+      <a href="#guide" data-tab="guide">안내</a>
+      <a href="#simhwa" data-tab="simhwa">심화분석지</a>
+      <a href="#trend" data-tab="trend">경향분석지</a>
+      <a href="#prompt" data-tab="prompt">프롬프트</a>
+    </nav>
+    <a class="ver" href="#guide" id="verPill" data-jump="changelog" title="변경 기록 보기"></a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ───────── 안내 ───────── -->
+  <section class="view" id="view-guide" hidden>
+    <div class="wrap">
+      <div class="intro">
+        <p class="eyebrow">처음 쓰는 분은 여기부터</p>
+        <h1>시험지 한 부로<br>심화분석지와 경향분석지 만들기</h1>
+        <p class="lead">조교가 1차 심화분석지를 만들고, 강사가 검수해 확정한 파일로 경향분석지를 만듭니다. 내 역할을 고르고 순서대로 따라 하세요.</p>
+
+        <ol class="flow" aria-label="파일이 넘어가는 순서">
+          <li><span class="who">조교</span><span class="what">시험지·원문 PDF → AI → 붙여넣기</span><code class="file">…_심화분석_강사검수중.html</code></li>
+          <li><span class="who">강사</span><span class="what">검수 · 정답 확인 · 평가 확정</span><code class="file">…_심화분석_검수완료.html</code></li>
+          <li><span class="who">강사</span><span class="what">불러오기 · 총평 두 칸</span><code class="file">…_경향분석.html</code></li>
+        </ol>
+      </div>
+
+      <div class="rolebar">
+        <div class="seg" role="tablist" aria-label="역할 고르기">
+          <button type="button" role="tab" data-role="asst" id="roleAsst">조교</button>
+          <button type="button" role="tab" data-role="teacher" id="roleTeacher">강사</button>
+        </div>
+        <p class="rolelead" id="roleLead"></p>
+        <div class="prog"><span class="meter"><i id="progBar"></i></span><span id="progText"></span><button type="button" class="link" id="progReset">체크 지우기</button></div>
+      </div>
+
+      <div class="guide">
+        <aside class="toc" aria-label="단계 목록"><ol id="toc"></ol></aside>
+        <div class="steps" id="steps"></div>
+      </div>
+
+      <section class="block" id="criteria">
+        <h2>강사 판단 기준표</h2>
+        <p class="note">검수할 때 옆에 펴 두고 보는 기준입니다. 모든 강사가 같은 기준으로 판단해야 결과물이 같아집니다.</p>
+        <div id="critList"></div>
+      </section>
+
+      <section class="block" id="changelog">
+        <h2>변경 기록</h2>
+        <p class="note">이 사이트의 템플릿·프롬프트는 항상 최신입니다. 예전에 받아 둔 파일 대신 이 주소에서 작업하세요.</p>
+        <div class="tblwrap"><table class="log"><thead><tr><th>날짜</th><th>대상</th><th>바뀐 점</th></tr></thead><tbody id="logBody"></tbody></table></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ───────── 심화분석지 / 경향분석지 (템플릿을 그대로 띄움) ───────── -->
+  <section class="view tool" id="view-simhwa" data-tool="simhwa" hidden>
+    <div class="toolbar">
+      <div class="tb-l"><b>심화분석지</b><span class="tv" data-ver="simhwa"></span><span class="hint">조교: 붙여넣기 → ① 조교 확인 → 저장 · 강사: 불러오기 → ② 강사 확인 → 평가 → 저장</span></div>
+      <div class="tb-r">
+        <button type="button" class="tbtn primary" data-drawer="simhwa">단계 안내</button>
+        <a class="tbtn" data-open="simhwa" target="_blank" rel="noopener">새 창에서 열기</a>
+        <a class="tbtn" data-dl="simhwa">파일 받기</a>
+      </div>
+    </div>
+    <div class="stage"><iframe title="심화분석지 템플릿" data-frame="simhwa"></iframe></div>
+  </section>
+
+  <section class="view tool" id="view-trend" data-tool="trend" hidden>
+    <div class="toolbar">
+      <div class="tb-l"><b>경향분석지</b><span class="tv" data-ver="trend"></span><span class="hint">강사: 검수완료 심화분석지 불러오기 → 총평 두 칸 → 저장 → 인쇄</span></div>
+      <div class="tb-r">
+        <button type="button" class="tbtn primary" data-drawer="trend">단계 안내</button>
+        <a class="tbtn" data-open="trend" target="_blank" rel="noopener">새 창에서 열기</a>
+        <a class="tbtn" data-dl="trend">파일 받기</a>
+      </div>
+    </div>
+    <div class="stage"><iframe title="경향분석지 템플릿" data-frame="trend"></iframe></div>
+  </section>
+
+  <!-- ───────── 프롬프트 ───────── -->
+  <section class="view" id="view-prompt" hidden>
+    <div class="wrap">
+      <div class="pgrid">
+        <div class="pmain">
+          <div class="phead">
+            <div>
+              <p class="eyebrow">조교용</p>
+              <h1 class="h1s">심화분석지 프롬프트 <span class="tv" data-ver="prompt"></span></h1>
+            </div>
+            <div class="pacts">
+              <button type="button" class="cta" id="copyPrompt">프롬프트 복사</button>
+              <a class="tbtn" id="dlPrompt">txt 받기</a>
+            </div>
+          </div>
+          <pre class="prompt" id="promptText" tabindex="0"></pre>
+        </div>
+        <aside class="pside">
+          <div class="card">
+            <h2>쓰는 법</h2>
+            <ol class="how">
+              <li>Claude 또는 GPT에서 <b>새 채팅</b>을 열고 시험지 PDF, 시험범위 원문 PDF를 첨부합니다.</li>
+              <li><span class="btn">프롬프트 복사</span>를 눌러 채팅에 붙여 넣습니다. 고칠 곳은 없습니다.</li>
+              <li>받은 JSON은 <a href="#simhwa">심화분석지</a>의 <span class="btn">데이터 붙여넣기</span>에 넣고, 채팅에 <code class="file">다음</code>을 입력해 반복합니다.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h2>다시 요청하는 문장</h2>
+            <p class="note">'① 조교 확인'에 ✕가 뜨면 해당 문장을 복사해 ○를 바꾼 뒤 AI에게 보냅니다. 다시 받은 JSON을 붙여 넣으면 그 번호만 바뀝니다.</p>
+            <ul class="fixes" id="fixes"></ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 도구 탭 옆에 펼치는 단계 안내 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="dr-in" role="dialog" aria-modal="false" aria-labelledby="drTitle">
+    <div class="dr-h">
+      <b id="drTitle">단계 안내</b>
+      <div class="seg sm" aria-label="역할">
+        <button type="button" data-role="asst">조교</button>
+        <button type="button" data-role="teacher">강사</button>
+      </div>
+      <button type="button" class="x" id="drClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="dr-b" id="drBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/content.js"></script>
+<script src="assets/hub.js"></script>
+</body>
+</html>

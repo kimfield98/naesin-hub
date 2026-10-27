@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<!--
+  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.5
+  (2026.10.27 · 심화분석지 템플릿 v3.5와 짝으로 사용)
+
+  흐름
+  1. [강사] 심화분석지 검수를 마치고 [저장] → '…_심화분석_검수완료.html'
+  2. [강사] 이 파일을 브라우저로 열고 [심화분석지 불러오기] → 위 파일 선택 (화면에 끌어다 놓아도 됨)
+     → 출처·유형·변형·난이도·킬러·문항 지도가 자동으로 채워집니다. 따로 AI 작업이 없습니다.
+  3. [강사] '출제 경향 총평', '다음 시험 대비 포인트' 두 칸만 직접 씁니다. → [저장]
+     → 다운로드 폴더에 '…_경향분석.html'이 생깁니다.
+  4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄 (보통 1쪽, 넘치면 뒷면으로 이어짐)
+
+  자동 계산(심화분석지와 같은 고정 공식, 사람이 고치지 않음)
+  - 변형률: 시험 지문 단어 중 '원문에 같은 연속 3단어가 없는 단어'의 비율
+  - 변형 정도: 없음 5% 미만 · 하 5~25% · 중 25~75% · 상 75% 이상
+  - 숫자가 이상하면 이 파일이 아니라 심화분석지에서 고친 뒤 다시 불러옵니다.
+  디자인·계산 코드는 수정하지 않습니다.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내신 경향분석</title>
+<style>
+  /* ───────── 고정 디자인: 작업자는 이 부분을 수정하지 않습니다 ───────── */
+  :root{ --accent:#1E3A5F; --line:#C9D2DD; --ink:#1A1F2B; --sub:#4A5260; --faint:#7A8392; --track:#E6EAF0;
+         --lv0:#C9D2DD; --lv1:#9DB8D6; --lv2:#4F78A8; --lv3:#1E3A5F; }
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:0}
+  html,body{margin:0;background:#E6E9EE}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);font-size:12.5px;line-height:1.5;word-break:keep-all}
+  .sheet{width:794px;margin:24px auto;background:#fff;padding:0 46px}
+
+  table.frame{width:100%;border-collapse:collapse}
+  table.frame > thead td{height:15mm;vertical-align:bottom;padding:0 0 3mm}
+  table.frame > tfoot td{height:11mm}
+  .run{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line);padding-bottom:5px}
+  .run b{color:var(--accent);font-weight:700}
+
+  .cover h1{margin:4px 0 2px;font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .cover .range{margin:0 0 8px;font-size:12px;color:var(--sub)}
+  .cover .bar{height:0;border-top:3px solid var(--accent)}
+
+  /* 핵심 지표 */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}
+  .kpi{padding:7px 8px 7px;border-right:1px solid #E3E8EE}
+  .kpi:last-child{border-right:0}
+  .kpi .k{display:block;font-size:10.5px;color:var(--faint)}
+  .kpi .v{display:block;font-size:15px;font-weight:800;color:var(--accent);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kpi .s{display:block;font-size:10.5px;color:var(--sub);line-height:1.35}
+
+  /* 상자 */
+  .row3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px;margin-top:12px}
+  .row2{display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin-top:12px}
+  .box{break-inside:avoid}
+  .box h3{margin:0 0 6px;font-size:12.5px;color:var(--accent);border-bottom:1.5px solid var(--accent);padding-bottom:3px;display:flex;justify-content:space-between;align-items:baseline}
+  .box h3 small{font-weight:400;font-size:10.5px;color:var(--faint)}
+
+  /* 막대: 배경 그래픽 설정이 꺼져 있어도 인쇄되도록 테두리로 그림 */
+  .track{position:relative;display:block;height:0;border-top:7px solid var(--track)}
+  .fill{position:absolute;left:0;top:-7px;height:0;border-top:7px solid var(--accent)}
+  .brow{display:grid;grid-template-columns:60px 1fr 78px;gap:6px;align-items:center;font-size:11.5px;min-height:18px}
+  .brow .bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .bv{text-align:right;color:var(--sub);white-space:nowrap;font-size:11px}
+  .brow .bv b{color:var(--ink)}
+
+  /* 출처 표 */
+  .srow{display:grid;grid-template-columns:52px 1fr 30px 66px 44px;gap:6px;align-items:center;font-size:11.5px;min-height:19px}
+  .srow.h{font-size:10px;color:var(--faint);min-height:14px}
+  .srow .n,.srow .p,.srow .r{text-align:right;white-space:nowrap}
+  .srow .p{color:var(--sub);font-size:11px}
+  .srow .r{font-size:11px}
+  .srow b{font-weight:700}
+  .units{margin-top:6px;border-top:1px dotted var(--line);padding-top:4px;font-size:10.5px;color:var(--sub);line-height:1.5}
+  .units div{margin:1px 0}
+  .units b{color:var(--ink);margin-right:3px}
+  .units .bk{color:var(--faint)}
+  .note{font-size:10.5px;color:var(--faint);margin-top:4px}
+
+  /* 변형 방식 */
+  .chips{display:flex;flex-wrap:wrap;gap:3px 4px;margin-top:6px}
+  .chip{border:1px solid var(--line);border-radius:3px;padding:0 5px;font-size:10.5px;color:var(--sub);white-space:nowrap}
+  .chip b{color:var(--accent)}
+  .sub-k{font-size:10.5px;color:var(--faint);margin-top:6px}
+
+  /* 문항 지도 */
+  .mapbox{margin-top:12px;break-inside:avoid}
+  .legend{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:10.5px;color:var(--sub);margin:0 0 5px}
+  .sw{display:inline-block;width:12px;height:0;border-top:8px solid;vertical-align:1px;margin-right:3px}
+  .map{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+  .tile{border:1px solid var(--line);border-left:5px solid var(--lv0);border-radius:3px;padding:2px 4px 2px 5px;font-size:10.5px;line-height:1.32;min-width:0}
+  .tile > div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .t1{display:flex;justify-content:space-between;align-items:baseline}
+  .tile .t1 b{font-size:13px;color:var(--accent)}
+  .tile .t1 small{font-size:9.5px;color:var(--faint)}
+  .tile .src{color:var(--sub)}
+  .tile .t4{display:flex;justify-content:space-between;align-items:center}
+  .tile .df{border:1px solid var(--line);border-radius:2px;padding:0 3px;font-size:9.5px;line-height:1.35}
+  .tile .df.h{border-color:var(--ink);font-weight:700}
+  .tile.k{border-color:var(--ink);border-width:1.5px;border-left-width:5px}
+  .tile.lv1{border-left-color:var(--lv1)} .tile.lv2{border-left-color:var(--lv2)} .tile.lv3{border-left-color:var(--lv3)}
+  .tile.lvx{border-left-style:dashed;border-left-color:#A0A7B2}
+  .star{color:var(--ink);font-weight:700}
+
+  /* 난이도 상자 */
+  .klist{margin-top:6px;font-size:11px;line-height:1.5}
+  .klist div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ans{margin-top:6px;font-size:11px;color:var(--sub);border-top:1px dotted var(--line);padding-top:4px}
+  .ans b{color:var(--ink);font-weight:700;margin:0 6px 0 1px}
+
+  /* 강사 총평 */
+  .cm + .cm{margin-top:8px}
+  .ch{font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:2px}
+  .ce{font-size:12.5px;line-height:1.6;min-height:44px;border:1px dashed var(--line);border-radius:4px;padding:4px 7px;outline:none;white-space:pre-line}
+  .ce:focus{border-color:var(--accent);border-style:solid}
+  .ce:empty::before{content:attr(data-ph);color:#A9B0BB}
+  .blank{display:none}
+  .warnp{font-size:10.5px;color:#9A6A00;margin-top:8px}
+
+  /* 화면 전용 */
+  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px}
+  .toolbar .p{margin-right:auto}
+  .toolbar button{font:inherit;font-size:13px;border:1px solid #fff;background:transparent;color:#fff;border-radius:5px;padding:4px 12px;cursor:pointer}
+  .toolbar button.main{background:#fff;color:var(--accent);font-weight:700}
+  .toolbar button:disabled{opacity:.4;cursor:not-allowed}
+  .panel{width:794px;margin:18px auto 0;background:#fff;border-radius:8px;padding:14px 18px;font-size:13px;border:1px solid var(--line)}
+  .panel h2{margin:0 0 8px;font-size:14px;color:var(--accent)}
+  .panel h2 small{font-weight:400;color:var(--faint);margin-left:6px}
+  .panel .saved{margin:0 0 8px;font-size:12px;color:var(--sub)} .panel .unsaved{color:#B42318;font-weight:700}
+  .chk{display:grid;grid-template-columns:22px 1fr;gap:2px 6px;line-height:1.55}
+  .chk .i{font-weight:800;text-align:center}
+  .chk .ok{color:#1F7A4A} .chk .warn{color:#9A6A00} .chk .bad{color:#B42318} .chk .info{color:var(--faint)}
+  .empty{padding:60px 0;text-align:center;color:var(--faint);font-size:14px;line-height:1.8}
+  .drop{outline:3px dashed #F5C542;outline-offset:-10px}
+
+  @media print{
+    html,body{background:#fff}
+    .toolbar,.panel{display:none!important}
+    .sheet{width:auto;margin:0;padding:0 13mm}
+    .ce{border:0;padding:0 0 2px;min-height:0}
+    .ce:empty{display:none}
+    .ce:empty + .blank{display:block}
+    .blank i{display:block;height:7mm;border-bottom:1px dotted #9AA3AF}
+  }
+  @media screen and (max-width:860px){ .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} .row3,.row2{grid-template-columns:1fr} .map{grid-template-columns:repeat(5,1fr)} .kpis{grid-template-columns:repeat(3,1fr)} }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="p" id="progress"></span>
+  <button type="button" id="btnLoad">심화분석지 불러오기</button><input type="file" id="fileIn" accept=".html,.htm,.json" hidden>
+  <button type="button" id="btnSave">저장</button>
+  <button type="button" class="main" id="btnPrint">인쇄</button>
+</div>
+<div class="panel" id="panel"></div>
+
+<div class="sheet"><div id="app"></div></div>
+
+<!-- 데이터: 직접 고치지 않습니다. [심화분석지 불러오기]와 [저장]으로만 바뀝니다. -->
+<script type="application/json" id="data">
+{
+ "meta": {
+  "academy": "에이닷 영어학원 세종아름지점"
+ },
+ "groups": {},
+ "items": []
+}
+</script>
+<script>
+(function(){
+  /* ── 고정 목록·기준: 심화분석지 v3.5와 같음, 수정 금지 ── */
+  const CATS  = ["교과서","모의고사","부교재","외부지문","미확인"];
+  const LEVEL = r => r==null ? null : r<5 ? '없음' : r<25 ? '하' : r<75 ? '중' : '상';
+  const LV_CLASS = {'없음':'lv0','하':'lv1','중':'lv2','상':'lv3'};
+
+  let D = JSON.parse(document.getElementById('data').textContent);
+  let dirty = false;
+  const app = document.getElementById('app');
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const isSubj = no => /^서[답술]/.test(no);
+  const qLabel = no => isSubj(no) ? `서답형 ${String(no).replace(/^서[답술]형?\s*/,'')}` : `${no}번`;
+  const qShort = no => isSubj(no) ? `서${String(no).replace(/^서[답술]형?\s*/,'')}` : String(no);
+  const r1 = x => Math.round(x*10)/10;
+
+  /* ── 변형률 계산: 심화분석지 v3.5와 같은 고정 공식 (수정 금지) ── */
+  const WORD = /[A-Za-z]+(?:['’][A-Za-z]+)*/g;
+  const blankLabels = s => String(s||'').replace(/\(\s*[A-Ea-e]\s*\)/g, m => ' '.repeat(m.length));
+  function toks(s){ const out=[]; let m; const c = blankLabels(s); WORD.lastIndex=0;
+    while((m=WORD.exec(c))) out.push({w:m[0].toLowerCase().replace(/’/g,"'"), a:m.index, b:m.index+m[0].length});
+    return out; }
+  function grams(t){ const g=new Set(); for(let i=0;i+2<t.length;i++) g.add(t[i].w+' '+t[i+1].w+' '+t[i+2].w); return g; }
+  function cover(t, g){ return t.map((_,i)=>{ for(let k=i-2;k<=i;k++){ if(k<0||k+2>=t.length) continue;
+      if(g.has(t[k].w+' '+t[k+1].w+' '+t[k+2].w)) return true; } return false; }); }
+  function analyze(exam, orig){
+    if(!orig || !String(orig).trim() || !exam) return null;
+    const te = toks(exam), to = toks(orig); if(te.length<3) return null;
+    const cov = cover(te, grams(to)), newN = cov.filter(c=>!c).length;
+    return { rate: Math.round(newN/te.length*100) };
+  }
+  function origOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.original || (g && g.original) || ''; }
+  function examOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.passage || (g && g.passage) || ''; }
+  function varOf(it){ const a = analyze(examOf(it), origOf(it)); return a ? {rate:a.rate, level:LEVEL(a.rate)} : null; }
+
+  /* ── 출처 세부: 출처 상세 글에서 단원만 뽑음 ── */
+  function unitOf(s){ const d = String(s.detail||''); let m;
+    if(s.cat==='교과서'){ if((m=d.match(/(\d+)\s*과/))) return m[1]+'과'; if((m=d.match(/lesson\s*(\d+)/i))) return 'Lesson '+(+m[1]); }
+    if(s.cat==='부교재'){ if((m=d.match(/unit\s*(\d+)/i))) return 'UNIT '+(+m[1]); if((m=d.match(/(\d+)\s*강/))) return m[1]+'강'; }
+    if(s.cat==='모의고사'){ if((m=d.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/))) return m[1].slice(2)+'년 '+(+m[2])+'월'; }
+    return ''; }
+  function bookOf(s){ const d = String(s.detail||''); let m;
+    if(s.cat==='부교재' && (m=d.match(/^(.*?)\s*(unit\s*\d+|\d+\s*강)/i))) return m[1].trim();
+    if(s.cat==='교과서' && (m=d.match(/^(.*?)\s*(\d+\s*과|lesson\s*\d+)/i))) return m[1].trim();
+    return ''; }
+  function srcShort(r){ const u = r.unit;
+    if(r.cat==='모의고사') return '모의 '+(u ? u.replace(/^(\d+)년 (\d+)월$/,'$1.$2') : '');
+    if(r.cat==='부교재') return '부교 '+u.replace(/^UNIT /,'U');
+    if(r.cat==='교과서') return '교과 '+u;
+    if(r.cat==='외부지문') return '외부';
+    return r.cat+(u?' '+u:''); }
+
+  /* ── 집계 ── */
+  function rowsOf(){
+    return (D.items||[]).filter(it=>it.stem||it.type).map(it=>{
+      const s = it.source||{}, e = it.eval||{};
+      return { it, no:String(it.no), pts:Number(it.points)||0, type:it.type||'미분류', cat:CATS.includes(s.cat)?s.cat:'미확인',
+        unit:unitOf(s), book:bookOf(s), v:varOf(it), diff:e.difficulty||'', killer:!!e.killer, done:e.status==='done',
+        methods:it.methods||[], answer:String(it.answer||'') };
+    });
+  }
+  function agg(rows, key){ const m = new Map();
+    rows.forEach(r=>{ const k = key(r); if(!m.has(k)) m.set(k,{k, n:0, pts:0, rows:[]}); const o = m.get(k); o.n++; o.pts+=r.pts; o.rows.push(r); });
+    return [...m.values()].sort((a,b)=> b.n-a.n || b.pts-a.pts); }
+  const avgRate = rows => { const v = rows.filter(r=>r.v); return v.length ? Math.round(v.reduce((s,r)=>s+r.v.rate,0)/v.length) : null; };
+  const top = list => { if(!list.length) return null; const t = list.filter(o=>o.n===list[0].n && r1(o.pts)===r1(list[0].pts)); return t; };
+  const bar = (pct, color) => `<span class="track"><span class="fill" style="width:${Math.max(0,Math.min(100,pct))}%${color?';border-top-color:'+color:''}"></span></span>`;
+
+  /* ── 화면 그리기 ── */
+  function render(){
+    if(dirty) autosave();
+    D.meta = D.meta||{}; D.items = D.items||[]; const m = D.meta, T = m.trend = m.trend||{};
+    const rows = rowsOf(), bad = panel(rows);
+    document.title = m.school ? `${m.school} ${m.grade} ${m.exam} 경향분석` : '내신 경향분석';
+    $('progress').textContent = !rows.length ? '심화분석지 저장 파일을 불러와 시작하세요' :
+      `${m.school||''} ${m.grade||''} ${m.exam||''} · 문항 ${rows.length}개 · 확인 필요 ${bad}`;
+    $('btnSave').disabled = !rows.length;
+    if(!rows.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[심화분석지 불러오기]를 눌러 강사 검수를 마친 심화분석지 파일<br>(…_심화분석_검수완료.html)을 고르거나, 이 화면에 끌어다 놓으세요.</div>`; return; }
+
+    const total = r1(rows.reduce((s,r)=>s+r.pts,0));
+    const subj = rows.filter(r=>isSubj(r.no)), obj = rows.filter(r=>!isSubj(r.no));
+    const byCat = agg(rows, r=>r.cat), byType = agg(rows, r=>r.type);
+    const withV = rows.filter(r=>r.v), avg = avgRate(rows);
+    const lvCount = L => rows.filter(r=>r.v && r.v.level===L);
+    const killers = rows.filter(r=>r.killer);
+    const diffs = ['상','중','하'].map(d=>({d, rs:rows.filter(r=>r.diff===d)}));
+    const draft = rows.filter(r=>!r.done).length;
+    const pctOf = p => total ? Math.round(p/total*100) : 0;
+
+    /* 핵심 지표 */
+    const tc = top(byCat), tt = top(byType);
+    const kpis = `<div class="kpis">
+      <div class="kpi"><span class="k">문항 구성</span><span class="v">${rows.length}문항</span><span class="s">객관식 ${obj.length} · 서답 ${subj.length}<br>배점 ${total}점</span></div>
+      <div class="kpi"><span class="k">최다 출처</span><span class="v">${esc(tc.map(o=>o.k).join('·'))}</span><span class="s">${tc[0].n}문항 · ${r1(tc[0].pts)}점<br>배점의 ${pctOf(tc[0].pts)}%</span></div>
+      <div class="kpi"><span class="k">최다 유형</span><span class="v">${esc(tt.slice(0,2).map(o=>o.k).join('·'))}</span><span class="s">${tt[0].n}문항 · ${r1(tt[0].pts)}점<br>유형 ${byType.length}가지 출제</span></div>
+      <div class="kpi"><span class="k">평균 변형률</span><span class="v">${avg==null?'—':esc(LEVEL(avg)+' '+avg+'%')}</span><span class="s">상 ${lvCount('상').length} · 중 ${lvCount('중').length} · 하 ${lvCount('하').length}<br>없음 ${lvCount('없음').length}${rows.length-withV.length?` · 원문 없음 ${rows.length-withV.length}`:''}</span></div>
+      <div class="kpi"><span class="k">난이도</span><span class="v">상 ${diffs[0].rs.length} · 중 ${diffs[1].rs.length} · 하 ${diffs[2].rs.length}</span><span class="s">고난도(상) 배점<br>${r1(diffs[0].rs.reduce((s,r)=>s+r.pts,0))}점</span></div>
+      <div class="kpi"><span class="k">킬러</span><span class="v">${killers.length}문항</span><span class="s">${killers.length?esc(killers.map(r=>qLabel(r.no)).join(', ')):'없음'}</span></div>
+    </div>`;
+
+    /* 출처 */
+    const units = byCat.filter(o=>o.k!=='외부지문' && o.k!=='미확인').map(o=>{
+      const books = agg(o.rows, r=>r.book);
+      return books.map(b=>{
+        const us = agg(b.rows, r=>r.unit||'기타').sort((x,y)=> y.n-x.n || String(x.k).localeCompare(String(y.k),'ko',{numeric:true}));
+        return `<div><b>${esc(o.k)}</b>${b.k?`<span class="bk">${esc(b.k)}</span> `:''}— ${us.map(u=>`${esc(u.k)} ${u.n}`).join(' · ')}</div>`;
+      }).join('');
+    }).join('');
+    const src = `<div class="box"><h3>출처<small>막대 = 배점 비율</small></h3>
+      <div class="srow h"><span>출처</span><span></span><span class="n">문항</span><span class="p">배점</span><span class="r">평균변형</span></div>
+      ${byCat.map(o=>{ const a = avgRate(o.rows); return `<div class="srow"><b>${esc(o.k)}</b>${bar(pctOf(o.pts))}<span class="n">${o.n}</span><span class="p">${r1(o.pts)}점 ${pctOf(o.pts)}%</span><span class="r">${a==null?'—':a+'%'}</span></div>`; }).join('')}
+      ${units?`<div class="units">${units}</div>`:''}
+    </div>`;
+
+    /* 유형 */
+    const maxT = byType[0].n;
+    const typ = `<div class="box"><h3>유형<small>문항 수</small></h3>
+      ${byType.map(o=>`<div class="brow"><span class="bl">${esc(o.k)}</span>${bar(o.n/maxT*100)}<span class="bv"><b>${o.n}</b> · ${r1(o.pts)}점</span></div>`).join('')}
+    </div>`;
+
+    /* 변형 */
+    const lvs = ['상','중','하','없음'].map(L=>({L, rs:lvCount(L)}));
+    const maxL = Math.max(1, ...lvs.map(o=>o.rs.length));
+    const color = {'상':'var(--lv3)','중':'var(--lv2)','하':'var(--lv1)','없음':'var(--lv0)'};
+    const label = {'상':'상 75%↑','중':'중 25~75','하':'하 5~25','없음':'없음 5%↓'};
+    const meth = agg(rows.flatMap(r=>r.methods.map(x=>({...r, mk:x}))), r=>r.mk);
+    const big = rows.filter(r=>r.v && r.v.level==='상');
+    const vbox = `<div class="box"><h3>변형<small>문항 수</small></h3>
+      ${lvs.map(o=>`<div class="brow"><span class="bl">${label[o.L]}</span>${bar(o.rs.length/maxL*100, color[o.L])}<span class="bv"><b>${o.rs.length}</b> · ${r1(o.rs.reduce((s,r)=>s+r.pts,0))}점</span></div>`).join('')}
+      ${rows.length-withV.length?`<div class="note">원문 없음(변형률 계산 안 됨): ${esc(rows.filter(r=>!r.v).map(r=>qShort(r.no)).join(', '))}</div>`:''}
+      ${big.length?`<div class="sub-k">변형 '상' 문항: ${esc(big.map(r=>qShort(r.no)).join(', '))}</div>`:''}
+      <div class="sub-k">자주 쓴 변형 방식</div>
+      <div class="chips">${meth.slice(0,7).map(o=>`<span class="chip">${esc(o.k)} <b>${o.n}</b></span>`).join('')||'<span class="note">—</span>'}</div>
+    </div>`;
+
+    /* 문항 지도 */
+    const tiles = rows.map(r=>{
+      const lv = r.v ? LV_CLASS[r.v.level] : 'lvx';
+      return `<div class="tile ${lv}${r.killer?' k':''}" title="${esc(qLabel(r.no)+' · '+(r.it.source&&r.it.source.detail||''))}">
+        <div class="t1"><b>${esc(qShort(r.no))}${r.killer?'<span class="star">★</span>':''}</b><small>${r.pts}점</small></div>
+        <div>${esc(r.type)}</div>
+        <div class="src">${esc(srcShort(r))}</div>
+        <div class="t4"><span>${r.v?r.v.rate+'%':'—'}</span><span class="df${r.diff==='상'?' h':''}">${esc(r.diff||'—')}</span></div></div>`; }).join('');
+    const map = `<div class="mapbox box"><h3>문항 지도<small>문항 순서대로</small></h3>
+      <div class="legend"><span>칸 왼쪽 색 = 변형 정도</span>
+        <span><i class="sw" style="border-top-color:var(--lv3)"></i>상</span><span><i class="sw" style="border-top-color:var(--lv2)"></i>중</span>
+        <span><i class="sw" style="border-top-color:var(--lv1)"></i>하</span><span><i class="sw" style="border-top-color:var(--lv0)"></i>없음</span>
+        <span>· 아래 줄 = 변형률 / 난이도</span><span>· ★ = 킬러(굵은 테두리)</span><span>· 교과=교과서 부교=부교재 모의=모의고사</span></div>
+      <div class="map">${tiles}</div></div>`;
+
+    /* 난이도·킬러 */
+    const maxD = Math.max(1, ...diffs.map(o=>o.rs.length));
+    const ansN = '①②③④⑤'.split('').map(c=>({c, n:obj.filter(r=>r.answer===c).length}));
+    const dbox = `<div class="box"><h3>난이도 · 킬러</h3>
+      ${diffs.map(o=>`<div class="brow"><span class="bl">${o.d}</span>${bar(o.rs.length/maxD*100, o.d==='상'?'var(--ink)':o.d==='중'?'var(--lv2)':'var(--lv1)')}<span class="bv"><b>${o.rs.length}</b> · ${r1(o.rs.reduce((s,r)=>s+r.pts,0))}점</span></div>`).join('')}
+      <div class="klist">${killers.length ? killers.map(r=>`<div><span class="star">★</span> ${esc(qLabel(r.no))} · ${esc(r.type)} · ${esc(srcShort(r))}${r.v?' · 변형 '+r.v.rate+'%':''}</div>`).join('') : '<div class="note">킬러 문항 없음</div>'}</div>
+      ${obj.length?`<div class="ans">객관식 정답 분포 ${ansN.map(a=>`${a.c}<b>${a.n}</b>`).join('')}</div>`:''}
+    </div>`;
+
+    /* 강사 총평 */
+    const blank = '<div class="blank"><i></i><i></i><i></i></div>';
+    const cbox = `<div class="box"><h3>강사 총평${m.reviewer?`<small>검수 ${esc(m.reviewer)}</small>`:''}</h3>
+      <div class="cm"><div class="ch">출제 경향 총평</div><div class="ce" contenteditable="true" data-k="overall" data-ph="예: 부교재·모의고사 비중이 교과서보다 크고, 부교재 UNIT 14에서 변형이 가장 컸다. 어휘·빈칸이 중심이며 킬러는 T/F 복합·서답형 어법.">${esc(T.overall||'')}</div>${blank}</div>
+      <div class="cm"><div class="ch">다음 시험 대비 포인트</div><div class="ce" contenteditable="true" data-k="prep" data-ph="예: 부교재는 원문 암기보다 바뀐 표현 다시 읽기 연습, 서답형 조건영작·어법 수정 반복, 모의고사 지문 문장 삭제·추가 대비.">${esc(T.prep||'')}</div>${blank}</div>
+      ${draft?`<p class="warnp">※ 강사 검수 전(AI 초안) 문항 ${draft}개가 포함된 자료입니다.</p>`:''}
+    </div>`;
+
+    app.innerHTML = `
+      <table class="frame">
+        <thead><tr><td><div class="run"><b>${esc(m.academy)} · 내신 경향분석</b><span>${esc(m.school)} ${esc(m.grade)} ${esc(m.exam)}</span></div></td></tr></thead>
+        <tfoot><tr><td></td></tr></tfoot>
+        <tbody><tr><td>
+          <section class="cover">
+            <h1>${esc(m.school)} ${esc(m.grade)} · ${esc(m.exam)} 경향분석</h1>
+            <p class="range">${esc(m.range)} &nbsp;|&nbsp; ${esc(m.date)}${m.reviewer?` &nbsp;|&nbsp; 검수 ${esc(m.reviewer)}`:''}</p>
+            <div class="bar"></div>
+          </section>
+          ${kpis}
+          <div class="row3">${src}${typ}${vbox}</div>
+          ${map}
+          <div class="row2">${dbox}${cbox}</div>
+        </td></tr></tbody>
+      </table>`;
+  }
+
+  /* ── 확인 패널 (화면 전용) ── */
+  function panel(rows){
+    const m = D.meta||{}, L = [];
+    if(rows.length){
+      const pts = r1(rows.reduce((s,r)=>s+r.pts,0));
+      L.push([Math.abs(pts-100)<0.05?'ok':'warn', `문항 ${rows.length}개 · 배점 합계 ${pts}점${Math.abs(pts-100)<0.05?'':' → 심화분석지에서 배점·문항 누락 확인'}`]);
+      if(m.stage!=='조교 확인 완료') L.push(['bad','조교 확인 전 심화분석지입니다 → 조교 확인·강사 검수를 마친 파일을 불러오세요']);
+      const draft = rows.filter(r=>!r.done);
+      if(draft.length) L.push(['warn', `강사 검수 전 ${draft.length}문항: ${draft.map(r=>qShort(r.no)).join(', ')} → 난이도·킬러가 AI 초안입니다. 인쇄본에도 표시됩니다`]);
+      const ans = rows.filter(r=>r.it.answerCheck && r.it.answerCheck.result && r.it.answerCheck.result!=='일치' && !r.it.answerCheck.decision);
+      if(ans.length) L.push(['warn', `정답 확인이 끝나지 않은 문항: ${ans.map(r=>qShort(r.no)).join(', ')} → 심화분석지에서 [정답 확인]`]);
+      const unk = rows.filter(r=>r.cat==='미확인' || (r.it.source&&r.it.source.status==='자료상 미확인'));
+      if(unk.length) L.push(['warn', `출처 미확인: ${unk.map(r=>qShort(r.no)).join(', ')} → 경향분석에 '미확인'으로 집계됩니다`]);
+      const noU = rows.filter(r=>['교과서','부교재','모의고사'].includes(r.cat) && !r.unit);
+      if(noU.length) L.push(['info', `출처 상세에서 단원·회차를 못 읽은 문항: ${noU.map(r=>qShort(r.no)).join(', ')} → '기타'로 묶입니다 (예: '1과', 'UNIT 14', '2026년 9월'처럼 적으면 읽힘)`]);
+      const noV = rows.filter(r=>!r.v);
+      if(noV.length) L.push(['info', `원문이 없어 변형률을 계산하지 않은 문항: ${noV.map(r=>qShort(r.no)).join(', ')}`]);
+      const T = m.trend||{};
+      if(!(T.overall||'').trim() || !(T.prep||'').trim()) L.push(['warn','강사 총평 두 칸을 채워 주세요 (비워 두면 인쇄본에 손글씨 줄이 나옵니다)']);
+      if(!L.filter(x=>x[0]==='bad'||x[0]==='warn').length) L.push(['ok','확인 항목 이상 없음 · 바로 인쇄할 수 있습니다']);
+    }
+    const icon = {ok:'✓',bad:'✕',warn:'!',info:'·'};
+    $('panel').innerHTML = `<h2>확인 패널<small>화면에만 보이고 인쇄되지 않습니다</small></h2>
+      ${m.srcFile?`<p class="saved">불러온 심화분석지: <b>${esc(m.srcFile)}</b>${m.savedAt?` (심화분석지 저장 ${esc(new Date(m.savedAt).toLocaleString())})`:''}</p>`:''}
+      ${m.trendFile?`<p class="saved">마지막 저장 파일: <b>${esc(m.trendFile)}</b> (다운로드 폴더)${dirty?' · <span class="unsaved">저장 후 바뀐 내용 있음</span>':''}</p>`:''}
+      ${L.length?`<div class="chk">${L.map(([l,t])=>`<span class="i ${l}">${icon[l]}</span><span>${esc(t)}</span>`).join('')}</div>`:'<p class="saved">심화분석지 파일을 불러오면 여기에서 확인할 점을 알려 줍니다.</p>'}`;
+    return L.filter(x=>x[0]==='bad'||x[0]==='warn').length;
+  }
+
+  /* 총평 입력 */
+  app.addEventListener('focusout', ev => {
+    const k = ev.target.dataset && ev.target.dataset.k; if(!k) return;
+    const t = ev.target.innerText.replace(/\n{3,}/g,'\n\n').trim(), T = D.meta.trend = D.meta.trend||{};
+    if(t !== (T[k]||'')){ T[k] = t; dirty = true; const y = window.scrollY; render(); window.scrollTo(0,y); }
+  });
+
+  /* ── 불러오기: 심화분석지 저장 파일(HTML) 또는 JSON, 저장한 경향분석 파일도 가능 ── */
+  const examKey = d => [d.meta&&d.meta.school, d.meta&&d.meta.grade, d.meta&&d.meta.exam].join('|');
+  function readFile(f){
+    if(!f) return; const r = new FileReader();
+    r.onload = () => { try{
+        let t = String(r.result), nd;
+        if(/<html/i.test(t)){ const doc = new DOMParser().parseFromString(t,'text/html'), el = doc.getElementById('data'); if(!el) throw new Error('심화분석지 파일이 아닙니다'); nd = JSON.parse(el.textContent); }
+        else nd = JSON.parse(t);
+        if(!nd.meta || !Array.isArray(nd.items) || !nd.items.length) throw new Error('심화분석지 데이터가 없습니다');
+        const same = D.items && D.items.length && examKey(D)===examKey(nd);
+        if(D.items && D.items.length && !same && !confirm('지금 화면은 다른 시험입니다. 지우고 불러온 파일로 바꿀까요?')) return;
+        const keepT = same && D.meta.trend && (D.meta.trend.overall||D.meta.trend.prep) ? D.meta.trend : null;
+        D = nd; D.meta = D.meta||{};
+        if(!D.meta.trend && keepT) D.meta.trend = keepT;
+        if(!/경향분석/.test(f.name)) D.meta.srcFile = f.name;
+        dirty = true; render();
+      }catch(e){ alert('불러올 수 없습니다: ' + e.message); } };
+    r.readAsText(f, 'utf-8');
+  }
+  $('btnLoad').onclick = () => $('fileIn').click();
+  $('fileIn').onchange = ev => { readFile(ev.target.files[0]); ev.target.value=''; };
+  document.addEventListener('dragover', ev => { ev.preventDefault(); document.body.classList.add('drop'); });
+  document.addEventListener('dragleave', ev => { if(!ev.relatedTarget) document.body.classList.remove('drop'); });
+  document.addEventListener('drop', ev => { ev.preventDefault(); document.body.classList.remove('drop'); readFile(ev.dataTransfer.files[0]); });
+
+  /* ── 저장: 이 화면 그대로 새 HTML 파일로 내려받기 ── */
+  $('btnPrint').onclick = () => { const a = document.activeElement; if(a && a.blur) a.blur(); setTimeout(()=>window.print(), 50); };
+  $('btnSave').onclick = () => {
+    const a = document.activeElement; if(a && a.blur) a.blur();
+    const m = D.meta; m.trendSavedAt = new Date().toISOString();
+    const name = [m.school,m.grade,m.exam].filter(Boolean).join('_').replace(/\s+/g,'_') + '_경향분석.html';
+    m.trendFile = name;
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = '';
+    clone.querySelector('body').classList.remove('drop');
+    clone.querySelector('#data').textContent = '\n' + JSON.stringify(D, null, 1).replace(/<\//g,'<\\/') + '\n';
+    const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html'});
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000); dirty = false; autosave(); render();
+    alert(`저장했습니다: ${name}\n\n· 컴퓨터의 '다운로드' 폴더에 새로 생깁니다. 처음 연 템플릿 파일은 바뀌지 않습니다.\n· 다시 고칠 때는 이 파일을 더블클릭해 열면 됩니다.`);
+  };
+
+  /* ── 자동 보관: 같은 컴퓨터·같은 브라우저에서 창을 닫았다 다시 열 때 이어서 작업 ── */
+  const AKEY = 'adot-trend-v3';
+  function autosave(){ try{ if(!D.items || !D.items.length) return; const all = JSON.parse(localStorage.getItem(AKEY)||'{}');
+      all[examKey(D)] = {at: new Date().toISOString(), data: D}; localStorage.setItem(AKEY, JSON.stringify(all)); }catch(e){} }
+  function restoreOffer(){ try{
+      const all = JSON.parse(localStorage.getItem(AKEY)||'{}'); let cand = null;
+      if(D.items.length){ const c = all[examKey(D)]; if(c && (!D.meta.trendSavedAt || c.at > D.meta.trendSavedAt) && JSON.stringify(c.data)!==JSON.stringify(D)) cand = c; }
+      else Object.values(all).forEach(c => { if(!cand || c.at > cand.at) cand = c; });
+      if(cand && confirm(`이 컴퓨터에 자동 보관된 경향분석 작업이 있습니다.\n${[cand.data.meta.school,cand.data.meta.grade,cand.data.meta.exam].join(' ')} · ${new Date(cand.at).toLocaleString()}\n\n이어서 작업할까요?`)){ D = cand.data; dirty = true; }
+    }catch(e){} }
+  window.addEventListener('beforeunload', ev => { if(dirty){ ev.preventDefault(); ev.returnValue=''; } });
+
+  D.items = D.items||[];
+  restoreOffer();
+  render();
+})();
+</script>
+</body>
+</html>
