@@ -8,8 +8,8 @@
     .replace(/\*\*(.+?)\*\*/g, '<mark>$1</mark>')
     .replace(/`([^`]+)`/g, '<code class="file">$1</code>')
     .replace(/\[([^\[\]]+)\]/g, '<span class="btn">$1</span>');
-  const TABS = ['guide','simhwa','trend','prompt','my'];
-  const TOOL_NAME = {simhwa:'심화분석지', trend:'경향분석지', my:'My 내신분석'};
+  const TABS = ['guide','simhwa','trend','prompt','qna'];
+  const TOOL_NAME = {simhwa:'심화분석지', trend:'경향분석지'};
 
   /* ── 이 브라우저에만 남는 진행 체크 ── */
   const SKEY = 'adot-hub-v1';
@@ -37,9 +37,6 @@
   $$('[data-open]').forEach(a => a.href = toolUrl(a.dataset.open));
   $$('[data-dl]').forEach(a => { const k = a.dataset.dl; a.href = V[k].file; a.download = `${k==='simhwa'?'내신심화분석지':'내신경향분석지'}_템플릿_v${V[k].ver}.html`; });
   $('#dlPrompt').href = V.prompt.file; $('#dlPrompt').download = V.prompt.file.split('/').pop();
-  /* My 내신분석(실험 중): 오답노트 프롬프트 */
-  $('#dlNotePrompt').href = V.notePrompt.file; $('#dlNotePrompt').download = V.notePrompt.file.split('/').pop();
-  $('#copyNotePrompt').onclick = ev => copy(H.notePrompt, ev.currentTarget, '복사됨 ✓');
 
   /* ── 안내: 단계 ── */
   const role = () => H.roles[S.role];
@@ -92,6 +89,24 @@
   $('#fixes').innerHTML = H.fixes.map(([l,p],i)=>`<li><span class="fl">✕ ${esc(l)}</span><span class="fp">${esc(p)}</span><button type="button" class="tbtn" data-fix="${i}">복사</button></li>`).join('');
   $('#fixes').addEventListener('click', ev => { const b = ev.target.closest('[data-fix]'); if(b) copy(H.fixes[+b.dataset.fix][1], b); });
 
+  /* ── Q&A: content.js의 qna를 최신순으로, 분류·검색으로 거르기 ── */
+  const QA = (H.qna||[]).slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)));
+  let qaCat = '전체';
+  function renderQna(){
+    const cats = ['전체', ...new Set(QA.map(q=>q.cat))];
+    $('#qnaLead').textContent = `질문 ${QA.length}개 · 새 질문은 실습 시간이나 카톡으로 남겨 주세요. 답이 정리되면 여기에 쌓입니다.`;
+    $('#qnaChips').innerHTML = cats.map(c=>`<button type="button" class="qchip" data-qc="${esc(c)}" aria-pressed="${c===qaCat}">${esc(c)}</button>`).join('');
+    const kw = ($('#qnaSearch').value||'').trim().toLowerCase();
+    const list = QA.filter(q => (qaCat==='전체'||q.cat===qaCat) && (!kw || [q.q,q.a,q.cat,q.who].join(' ').toLowerCase().includes(kw)));
+    $('#qnaList').innerHTML = list.length ? list.map(q=>`<details class="qa" ${list.length<=4?'open':''}>
+        <summary><span class="qcat">${esc(q.cat)}</span><span class="qq">${fmt(q.q)}</span><span class="qmeta">${esc(q.who||'')} · ${esc(q.date)}</span></summary>
+        <div class="qa-a">${(Array.isArray(q.a)?q.a:[q.a]).map(x=>`<p>${fmt(x)}</p>`).join('')}${q.ver?`<p class="qver">반영: ${esc(q.ver)}</p>`:''}</div></details>`).join('')
+      : '<p class="note">찾는 질문이 없습니다.</p>';
+  }
+  $('#qnaChips').addEventListener('click', ev => { const b = ev.target.closest('[data-qc]'); if(!b) return; qaCat = b.dataset.qc; renderQna(); });
+  $('#qnaSearch').addEventListener('input', renderQna);
+  renderQna();
+
   /* ── 템플릿 띄우기: 처음 열 때만 불러오고, 탭을 옮겨도 작업 중인 화면은 그대로 둠 ── */
   function loadFrame(k){ const f = $(`[data-frame="${k}"]`); if(f && !f.getAttribute('src')) f.src = toolUrl(k); return f; }
 
@@ -122,7 +137,7 @@
       $$('.tabs a').forEach(a => { if(a.dataset.tab===t) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
       if(TOOL_NAME[t]) loadFrame(t); else closeDrawer();
       if(drawerFor && drawerFor!==t) openDrawer(t);
-      document.title = (t==='guide' ? '' : ({simhwa:'심화분석지',trend:'경향분석지',prompt:'프롬프트',my:'My 내신분석'})[t] + ' · ') + '에이닷 내신 분석실';
+      document.title = (t==='guide' ? '' : ({simhwa:'심화분석지',trend:'경향분석지',prompt:'프롬프트',qna:'Q&A'})[t] + ' · ') + '에이닷 내신 분석실';
       cur = t; window.scrollTo(0,0);
     }
   }

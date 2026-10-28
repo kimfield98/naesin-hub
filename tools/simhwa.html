@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.8
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.10
+  (v3.10 · 2026.10.29: 순서·삽입의 '주어진 문장(글)'에도 형광펜 표시(변형률 계산은 그대로 지문만), 강사가 영어 지문에서 글자를 골라 형광펜 추가·삭제, 교과서 본문 외 지문은 '교과서 · ○과 본문외'로 표기)
+  (v3.9 · 2026.10.28: 출처 분류를 교과서·모의고사·부교재·유인물·쌩외부지문·미확인으로 변경(예전 '외부지문'은 '쌩외부지문'으로 자동 변환), 부교재 이름 표기(수능특강라이트 등), 특이사항은 답 근거와 별개로 난이도 근거·문제 특징)
   (v3.8 · 2026.10.28: 글꼴·크기·자간·행간 통일(한글은 모두 본문 고딕, 영어는 Times 계열), 표지의 표시 설명(형광펜·밑줄·근거·변형률) 삭제, 특이사항에 AI 초안(note) 표시)
   (v3.7 · 2026.10.28: 조교 단계 삭제 — 강사가 붙여넣기부터 검수·저장까지 모두 진행. 검수 패널은 ① 데이터 확인 / ② 검수)
   (v3.6 · 2026.10.28: 문항 번호를 객관1·서답1처럼 같은 크기로 표기, 출처를 한 줄 요약(교과서 · 3과 / 부교재 · 올림포스 / 모의고사 · 26년 3모 36번), 문항 평가는 난이도·킬러 + 특이사항 줄글로 단순화)
@@ -107,7 +109,7 @@
   .tags{display:flex;flex-wrap:wrap;gap:4px;flex:1}
   .memo{font-size:13px;line-height:1.6;border-top:1px dotted var(--line);padding-top:7px;min-height:22px;outline:none;white-space:pre-line}
   .memo:focus{border-top-color:var(--accent)}
-  .memo:empty::before{content:'학생이 놓치기 쉬운 점, 채점 기준, 수업에서 짚을 점 등을 적어 주세요';color:#B4BBC6}
+  .memo:empty::before{content:'난이도를 그렇게 정한 근거, 이 문항만의 특이사항(특이한 유형·형식·채점 조건 등)을 적어 주세요. 답 근거는 위에 따로 있습니다';color:#B4BBC6}
   .note-k{font-size:12px;font-weight:700;color:var(--accent);border-top:1px dotted var(--line);padding-top:7px;margin-top:2px}
   .memo.note{border-top:0;padding-top:3px}
   .status{border-style:dashed;color:#9A6A00;border-color:#D9B44A}
@@ -277,6 +279,13 @@
     .eval.locked .seg,.eval.locked .tags,.eval.locked .memo{opacity:1}
   }
   @media (max-width:860px){ .panel .cols{grid-template-columns:1fr} .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} }
+  /* v3.10 강사 형광펜 */
+  @media screen{ .chg.man{box-shadow:inset 0 -1.5px 0 #C99A00;cursor:pointer} }
+  #hlTool{position:absolute;z-index:20;display:none;gap:4px;background:#1E3A5F;border-radius:6px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  #hlTool.on{display:flex}
+  #hlTool button{font:inherit;font-size:12px;border:0;background:#FFE27A;color:#1A1F2B;border-radius:4px;padding:3px 10px;cursor:pointer;font-weight:700}
+  #hlTool button.x{background:#fff}
+  @media print{ #hlTool{display:none!important} }
 
   /* ───────── v3.8 타이포그래피 통일 (위 규칙보다 우선) ─────────
      한글: 본문 고딕 한 가지(--f-ko) · 영어 지문/선지: Times 계열(--f-en, 한글이 섞이면 자동으로 본문 고딕)
@@ -349,7 +358,7 @@
 (function(){
   /* ── 고정 목록: 수정 금지 ── */
   const LIST = {
-    cat:    ["교과서","모의고사","부교재","외부지문","미확인"],
+    cat:    ["교과서","모의고사","부교재","유인물","쌩외부지문","미확인"],
     status: ["원문 확인","자료상 미확인","사용자 지정"],
     type:   ["내용일치","빈칸","어휘","어법","순서","삽입","무관","주제","제목","요지","주장",
              "함의추론","요약문","심경/분위기","도표","안내문","조건영작","T/F 복합"],
@@ -376,10 +385,13 @@
   /* v3.6 출처 한 줄: 교과서 · 3과 / 부교재 · 올림포스 / 모의고사 · 26년 3모 36번 */
   function srcLine(s){
     if(!s) return '—'; const c = s.cat||'미확인', d = String(s.detail||''); let m, x = '';
-    if(c==='교과서'){ if((m=d.match(/(\d+)\s*과/))) x = m[1]+'과'; else if((m=d.match(/lesson\s*(\d+)/i))) x = (+m[1])+'과'; }
+    if(c==='교과서'){ if((m=d.match(/(\d+)\s*과/))) x = m[1]+'과'; else if((m=d.match(/lesson\s*(\d+)/i))) x = (+m[1])+'과';
+      if(/본문\s*외/.test(d)) x = (x?x+' ':'')+'본문외'; }
     else if(c==='모의고사'){ m = d.match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/); const n = d.match(/(\d+(?:\s*[~∼-]\s*\d+)?)\s*번/);
       if(m) x = String(m[1]).slice(-2)+'년 '+(+m[2])+'모'+(n?' '+n[1].replace(/\s+/g,'').replace(/[∼-]/,'~')+'번':''); }
-    else if(c==='부교재'){ const w = d.replace(/^\s*(EBS|ebs)\s*/,'').replace(/[\[(].*$/,'').trim().split(/\s+/)[0]||''; x = w.replace(/[^가-힣A-Za-z0-9]/g,''); }
+    else if(c==='부교재'){ const dd = d.replace(/^\s*(EBS|ebs)\s*/,'');
+      if(/수능\s*특강\s*(라이트|light)/i.test(dd)) x = '수능특강라이트';
+      else { const w = dd.replace(/[\[(].*$/,'').trim().split(/\s+/)[0]||''; x = w.replace(/[^가-힣A-Za-z0-9]/g,''); } }
     return x ? c+' · '+x : c; }
   const qLabel = no => isSubj(no) ? `서답형 ${String(no).replace(/^서[답술]형?\s*/,'')}` : `${no}번`;
   const hasKo = s => /[가-힣]/.test(s||'');
@@ -417,7 +429,7 @@
   const mark = s => esc(s)
     .replace(/\[\[([\s\S]+?)\]\]/g,'<span class="ul">$1</span>')
     .replace(/\*\*(?:([\w가-힣]+)\|)?([\s\S]+?)\*\*/g,(m,n,t)=>`<span class="basis">${n?`<sup>${qLabel(n)}</sup>`:''}${t}</span>`)
-    .replace(/\u0001/g,'<span class="chg">').replace(/\u0002/g,'</span>');
+    .replace(/\u0001/g,'<span class="chg">').replace(/\u0003/g,'<span class="chg man">').replace(/\u0002/g,'</span>');
 
   /* 문항 하나의 비교 대상: 문항 전용 지문이 있으면 그것, 없으면 공유 지문 */
   function origOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.original || (g && g.original) || ''; }
@@ -425,16 +437,42 @@
   function varOf(it){ const a = analyze(examOf(it), origOf(it)); return a ? {rate:a.rate, level:LEVEL(a.rate)} : null; }
   const varText = v => v ? `${v.level} ${v.rate}%` : null;
 
-  /* 지문|해석 표: 줄 수가 같으면 한 줄씩, 다르면 통째로 나란히 */
-  function pairTable(en, ko, orig){
+  /* v3.10: 강사가 추가한 형광펜 — 표시 기호([[ ]], ** **, n|)를 뺀 글자에서 찾아 원래 위치에 표시 */
+  function plainMap(s){ const plain=[], map=[]; let i=0;
+    while(i<s.length){
+      if(s.startsWith('[[',i)||s.startsWith(']]',i)){ i+=2; continue; }
+      if(s.startsWith('**',i)){ const opening = (s.slice(0,i).match(/\*\*/g)||[]).length%2===0; i+=2; const m = s.slice(i).match(/^([\w가-힣]+)\|/); if(opening && m) i+=m[0].length; continue; }
+      plain.push(s[i]); map.push(i); i++; }
+    return {plain: plain.join(''), map}; }
+  const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  function hlMask(s, t, cov, extra){
+    const mask = new Array(s.length).fill(0);
+    if(t){ let i=0; while(i<t.length){ if(cov[i]){ i++; continue; }
+      let j=i; while(j+1<t.length && !cov[j+1] && /^[ ,.;:!?'"“”‘’—–\-()]*$/.test(s.slice(t[j].b, t[j+1].a))) j++;
+      for(let k=t[i].a;k<t[j].b;k++) mask[k]=1; i=j+1; } }
+    if(extra && extra.length){ const {plain, map} = plainMap(s);
+      extra.forEach(ph => { const q = String(ph).trim(); if(!q) return; const re = new RegExp(reEsc(q).replace(/\s+/g,'\\s+'),'g'); let m;
+        while((m=re.exec(plain))){ for(let k=m.index;k<m.index+m[0].length;k++) mask[map[k]]=2; if(!m[0].length) re.lastIndex++; } }); }
+    for(let k=0;k<s.length;k++) if(s[k]==='\n') mask[k]=0;
+    /* 표시 기호 글자는 칠하지 않아 태그가 엇갈리지 않게 함 */
+    for(let k=0;k<s.length;k++){ if((s[k]==='['||s[k]===']'||s[k]==='*') && (s[k+1]===s[k] || s[k-1]===s[k])) mask[k]=0; }
+    let out='', cur=0;
+    for(let k=0;k<s.length;k++){ const v = mask[k];
+      if(v!==cur){ if(cur) out+='\u0002'; if(v) out += v===2 ? '\u0003' : '\u0001'; cur=v; }
+      out += s[k]; }
+    if(cur) out+='\u0002';
+    return out; }
+  /* 지문|해석 표: 줄 수가 같으면 한 줄씩, 다르면 통째로 나란히. key = 형광펜 추가 대상 (i:번호:passage|box, g:묶음:passage) */
+  function pairTable(en, ko, orig, key, extra){
     const a = analyze(en, orig);
-    const marked = a ? withNew(String(en), a.te, a.cov) : String(en);
+    const marked = hlMask(String(en), a && a.te, a && a.cov, extra);
     const E = marked.split('\n').map(x=>x.trim()).filter(Boolean), K = lines(ko);
     const talk = E.filter(l=>/^(\[|[^.!?:]{1,40}:)/.test(l)).length > E.length/2;
     const para = `<div class="para passage en">${talk ? E.map(l=>`<p>${mark(l)}</p>`).join('') : `<p>${E.map(mark).join(' ')}</p>`}</div>`;
-    if(!K.length) return para;
-    if(E.length===K.length) return para + `<table class="pair withko"><tbody>${E.map((l,k)=>`<tr><td class="en">${mark(l)}</td><td class="ko">${mark(K[k])}</td></tr>`).join('')}</tbody></table>`;
-    return para + `<table class="pair split withko"><tbody><tr><td class="en">${E.map(mark).join('\n')}</td><td class="ko">${K.map(mark).join('\n')}</td></tr></tbody></table>`;
+    const wrap = h => key ? `<div class="hlwrap" data-hl="${esc(key)}">${h}</div>` : h;
+    if(!K.length) return wrap(para);
+    if(E.length===K.length) return wrap(para + `<table class="pair withko"><tbody>${E.map((l,k)=>`<tr><td class="en">${mark(l)}</td><td class="ko">${mark(K[k])}</td></tr>`).join('')}</tbody></table>`);
+    return wrap(para + `<table class="pair split withko"><tbody><tr><td class="en">${E.map(mark).join('\n')}</td><td class="ko">${K.map(mark).join('\n')}</td></tr></tbody></table>`);
   }
   function origBlock(orig, exam, target){
     if(!orig) return '';
@@ -449,7 +487,7 @@
   function listRow(it){
     const e = it.eval||{}, v = varOf(it), s = it.source;
     
-    const st = s && s.status && s.status!=='원문 확인' ? `<span class="st ${s.status==='사용자 지정'?'':'bad'}">${s.status==='사용자 지정'?'지정':'미확인'}</span>` : '';
+    const st = s && s.status && s.status!=='원문 확인' && s.cat!=='미확인' ? `<span class="st ${s.status==='사용자 지정'?'':'bad'}">${s.status==='사용자 지정'?'지정':'미확인'}</span>` : '';
     return `<tr class="${e.killer?'killer':''}">
       <td>${esc(qTag(it.no))}</td><td class="g" title="${it.group?esc('['+it.group+'] 공유 지문'):''}">${it.group?esc(shortGroup(it.group)):''}</td><td>${esc(it.points)}</td><td>${longAns(it.answer)?'<span class="more">아래 표 ↓</span>':esc(it.answer||'')}${needAns(it)?' '+goto(it.no,'<span class="scr">⚠</span>'):''}${it.answerFix?'<span class="fxb">정정</span>':''}</td>
       <td>${it.type?esc(it.type):dash}</td>
@@ -491,8 +529,11 @@
     if(!it.stem) return `<div class="q">${head}<div class="pending">문항 데이터 없음</div></div>`;
 
     const orig = origOf(it);
-    const own = it.passage ? pairTable(it.passage, it.passageKo, orig) : '';
-    const box = it.box ? `<div class="box">${pairTable(it.box, it.boxKo, '')}</div>` : '';
+    const H = it.hl||{};
+    const own = it.passage ? pairTable(it.passage, it.passageKo, orig, 'i:'+it.no+':passage', H.passage) : '';
+    /* v3.10: 순서·삽입의 주어진 문장(글)도 원문과 비교해 형광펜 (변형률에는 넣지 않음) */
+    const boxOrig = ['순서','삽입'].includes(it.type) ? orig : '';
+    const box = it.box ? `<div class="box">${pairTable(it.box, it.boxKo, boxOrig, 'i:'+it.no+':box', H.box)}</div>` : '';
     let choices = '';
     if(it.choices && it.choices.length){
       const ko = it.choicesKo||[], showKo = needKo(it.choices) && ko.length;
@@ -557,7 +598,7 @@
         out.push(`<article class="card group">
           <div class="gbar"><b>[${esc(it.group)}]</b><span>지문 공유 · ${idx.map(k=>esc(qLabel(items[k].no))).join(', ')}</span><button type="button" class="ebtn" data-eact="edit" data-t="${esc('g:'+it.group)}">공유 지문 고치기</button></div>
           ${editing==='g:'+it.group ? editForm('g:'+it.group) : `<p class="stem">${esc(g.stem||'')}</p>
-          ${g.passage?`<div class="shared">${pairTable(g.passage, g.passageKo, g.original)}</div>${origBlock(g.original, g.passage, 'g:'+it.group)}`:'<div class="pending">공유 지문 데이터 없음</div>'}`}
+          ${g.passage?`<div class="shared">${pairTable(g.passage, g.passageKo, g.original, 'g:'+it.group+':passage', (g.hl||{}).passage)}</div>${origBlock(g.original, g.passage, 'g:'+it.group)}`:'<div class="pending">공유 지문 데이터 없음</div>'}`}
           ${idx.map(k=>qblock(items[k],k,true)).join('')}
         </article>`);
       } else out.push(qblock(it,i,false));
@@ -598,9 +639,9 @@
     const afx = items.filter(i=>i.answerFix);
     if(afx.length) T.push(['info', `정답 정정 ${afx.length}문항: ${afx.map(i=>`${goto(i.no)}(학교 정답표 ${esc(i.answerFix.school)} → ${esc(i.answerFix.to)})`).join(', ')} · 인쇄본에 정정 표시가 함께 나갑니다`]);
     const unk = items.filter(i=>i.source && (i.source.cat==='미확인' || i.source.status==='자료상 미확인'));
-    if(unk.length) T.push(['warn', `출처를 자료에서 못 찾은 문항: ${nos(unk)} → 외부지문이면 출처 '외부지문', 상태 '사용자 지정'`]);
-    const ext = items.filter(i=>i.source && i.source.cat==='외부지문' && i.source.status!=='사용자 지정');
-    if(ext.length) T.push(['bad', `외부지문은 강사가 확인해 '사용자 지정'으로 둡니다: ${nos(ext)}`]);
+    if(unk.length) T.push(['warn', `출처 미확인: ${unk.map(i=>qLabel(i.no)+(/^후보/.test((i.source||{}).detail||'')?`(${esc(i.source.detail)})`:'')).join(', ')} → 학교 프린트면 '유인물', 시험에서 처음 보는 지문이면 '쌩외부지문'(상태 '사용자 지정'), 시험범위 자료에 있으면 원문을 넣고 '원문 확인'`]);
+    const ext = items.filter(i=>i.source && i.source.cat==='쌩외부지문' && i.source.status!=='사용자 지정');
+    if(ext.length) T.push(['bad', `쌩외부지문은 강사가 확인해 상태를 '사용자 지정'으로 둡니다: ${nos(ext)}`]);
     const hi = items.filter(i=>{ const v=varOf(i); return v && v.rate>=95; });
     if(hi.length) T.push(['warn', `변형률 95% 이상: ${nos(hi)} → '원문 보기'에서 같은 글이 맞는지 확인`]);
     const killers = items.filter(i=>i.eval && i.eval.killer);
@@ -610,6 +651,8 @@
     if(!m.reviewer) T.push(['warn','검수 강사 이름이 비어 있음']);
     const fx = [...new Set((m.fixes||[]).map(f=>f.target))];
     if(fx.length) T.push(['info', `직접 고친 곳 ${fx.length}곳: ${fx.map(t=>t.startsWith('g:')?'['+t.slice(2)+'] 공유 지문':qLabel(t.slice(2))).join(', ')}`]);
+    const hlN = items.reduce((n,i)=>n+Object.values(i.hl||{}).reduce((a,l)=>a+l.length,0),0) + Object.values(groups).reduce((n,g)=>n+Object.values(g.hl||{}).reduce((a,l)=>a+l.length,0),0);
+    if(hlN) T.push(['info', `강사가 추가한 형광펜 ${hlN}곳 (변형률 숫자에는 반영되지 않음)`]);
     if(editing) T.unshift(['bad','고치는 중인 카드가 있습니다 → [저장] 또는 [취소]']);
     if(!T.filter(x=>x[0]!=='info').length) T.push(['ok','검수 항목 이상 없음']);
 
@@ -768,9 +811,39 @@
     const box = el.querySelector('.acheck') || el; box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash');
   });
 
+  /* ── v3.10 강사 형광펜: 영어 지문에서 글자를 고르고 [형광펜 추가], 추가한 형광펜을 누르면 [지우기] ── */
+  const hlTool = document.createElement('div'); hlTool.id = 'hlTool'; document.body.appendChild(hlTool);
+  let hlCtx = null;
+  const hlOwner = key => { const [k, id, f] = [key.slice(0,1), key.slice(2, key.lastIndexOf(':')), key.slice(key.lastIndexOf(':')+1)];
+    const o = k==='g' ? (D.groups||{})[id] : D.items.find(x=>String(x.no)===id); return o ? {o, f} : null; };
+  function hlShow(x, y, html){ hlTool.innerHTML = html; hlTool.style.left = (x+window.scrollX)+'px'; hlTool.style.top = (y+window.scrollY+8)+'px'; hlTool.classList.add('on'); }
+  function hlHide(){ hlTool.classList.remove('on'); hlCtx = null; }
+  document.addEventListener('mouseup', ev => {
+    if(hlTool.contains(ev.target)) return;
+    const man = ev.target.closest && ev.target.closest('.chg.man');
+    const sel = window.getSelection(), txt = sel ? sel.toString().replace(/\s+/g,' ').trim() : '';
+    const wrap = ev.target.closest && ev.target.closest('.hlwrap');
+    if(!wrap || ev.target.closest('td.ko')){ hlHide(); return; }
+    if(txt.length>=2 && sel.rangeCount){ const r = sel.getRangeAt(0).getBoundingClientRect();
+      hlCtx = {key: wrap.dataset.hl, text: txt}; hlShow(r.left, r.bottom, '<button type="button" data-hla="add">형광펜 추가</button><button type="button" class="x" data-hla="cancel">취소</button>'); return; }
+    if(man){ const r = man.getBoundingClientRect(); hlCtx = {key: wrap.dataset.hl, text: man.textContent.replace(/\s+/g,' ').trim()};
+      hlShow(r.left, r.bottom, '<button type="button" class="x" data-hla="del">추가한 형광펜 지우기</button>'); return; }
+    hlHide();
+  });
+  hlTool.addEventListener('click', ev => { const b = ev.target.closest('button[data-hla]'); if(!b || !hlCtx) return;
+    const act = b.dataset.hla, own = hlOwner(hlCtx.key), y = window.scrollY;
+    if(act!=='cancel' && own){ const h = own.o.hl = own.o.hl||{}; const list = h[own.f] = h[own.f]||[];
+      if(act==='add'){ if(/[가-힣]/.test(hlCtx.text)){ alert('영어 지문 안에서만 고를 수 있습니다.'); hlHide(); return; } if(!list.includes(hlCtx.text)) list.push(hlCtx.text); }
+      if(act==='del'){ const t = hlCtx.text; const k = list.findIndex(p => p.replace(/\s+/g,' ').includes(t) || t.includes(p.replace(/\s+/g,' '))); if(k>=0) list.splice(k,1); }
+      if(!list.length) delete h[own.f]; dirty = true; }
+    window.getSelection().removeAllRanges(); hlHide(); render(); window.scrollTo(0,y);
+  });
+
   /* AI 초안 보관: 처음 들어온 평가를 eval.ai 에 남겨 강사 수정과 비교 */
   const noteFromMemo = it => { const e = it.eval; if(e && e.status!=='done' && e.note==null && e.memo){ e.note = e.memo; } };   // 예전 JSON(memo)도 특이사항 초안으로
-  const snap = it => { noteFromMemo(it); if(it.eval && !it.eval.ai) it.eval.ai = {difficulty:it.eval.difficulty, killer:!!it.eval.killer, factors:[...(it.eval.factors||[])]}; };
+  /* v3.9: 예전 분류 '외부지문' → '쌩외부지문' */
+  const normSrc = it => { if(it.source && it.source.cat==='외부지문') it.source.cat = '쌩외부지문'; };
+  const snap = it => { normSrc(it); noteFromMemo(it); if(it.eval && !it.eval.ai) it.eval.ai = {difficulty:it.eval.difficulty, killer:!!it.eval.killer, factors:[...(it.eval.factors||[])]}; };
   const order = no => isSubj(no) ? 1000 + (parseInt(String(no).replace(/\D/g,''))||0) : (parseInt(no)||0);
 
   /* 데이터 붙여넣기: meta가 있으면 새 시험으로 시작, 없으면 같은 번호만 교체·추가 */

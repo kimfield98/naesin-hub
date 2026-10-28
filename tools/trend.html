@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.9
+  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.10
+  (v3.10 · 2026.10.28: 출처 분류 교과서·모의고사·부교재·유인물·쌩외부지문·미확인 · 심화분석지 v3.9와 짝, 예전 '외부지문'은 '쌩외부지문'으로 집계)
   (v3.9 · 2026.10.28: 조교 단계 삭제에 맞춰 '조교 확인 전' 경고 삭제 · 심화분석지 v3.7과 짝)
   (v3.8 · 2026.10.28: 객관식 정답 분포 삭제, 총평을 등급컷(1·2등급+한 줄 평)·특징·대비법(각각 요약/객관식/주관식)으로 개편)
   (v3.7 · 2026.10.28: 문항 지도 삭제, '강사 총평' → '총평', 총평에 등급컷(1~4등급 최저 점수) 칸 추가)
@@ -183,7 +184,7 @@
 <script>
 (function(){
   /* ── 고정 목록·기준: 심화분석지 v3.5와 같음, 수정 금지 ── */
-  const CATS  = ["교과서","모의고사","부교재","외부지문","미확인"];
+  const CATS  = ["교과서","모의고사","부교재","유인물","쌩외부지문","미확인"];
   const LEVEL = r => r==null ? null : r<5 ? '없음' : r<25 ? '하' : r<75 ? '중' : '상';
   const LV_CLASS = {'없음':'lv0','하':'lv1','중':'lv2','상':'lv3'};
 
@@ -230,14 +231,15 @@
     if(r.cat==='모의고사') return '모의 '+(u ? u.replace(/^(\d+)년 (\d+)월$/,'$1.$2') : '');
     if(r.cat==='부교재') return '부교 '+u.replace(/^UNIT /,'U');
     if(r.cat==='교과서') return '교과 '+u;
-    if(r.cat==='외부지문') return '외부';
+    if(r.cat==='쌩외부지문') return '쌩외부';
+    if(r.cat==='유인물') return '유인물';
     return r.cat+(u?' '+u:''); }
 
   /* ── 집계 ── */
   function rowsOf(){
     return (D.items||[]).filter(it=>it.stem||it.type).map(it=>{
       const s = it.source||{}, e = it.eval||{};
-      return { it, no:String(it.no), pts:Number(it.points)||0, type:it.type||'미분류', cat:CATS.includes(s.cat)?s.cat:'미확인',
+      return { it, no:String(it.no), pts:Number(it.points)||0, type:it.type||'미분류', cat:s.cat==='외부지문'?'쌩외부지문':CATS.includes(s.cat)?s.cat:'미확인',
         unit:unitOf(s), book:bookOf(s), v:varOf(it), diff:e.difficulty||'', killer:!!e.killer, done:e.status==='done',
         methods:it.methods||[], answer:String(it.answer||'') };
     });
@@ -298,14 +300,14 @@
 
     /* 01 출제 출처 구성 */
     const catParts = byCat.map((o,i)=>({...o, color:PAL[i%PAL.length]}));
-    const srcDet = byCat.filter(o=>o.k!=='외부지문' && o.k!=='미확인').flatMap(o=>{
+    const srcDet = byCat.filter(o=>!['쌩외부지문','유인물','미확인'].includes(o.k)).flatMap(o=>{
       const lines = [];
       agg(o.rows, r=>r.book).forEach(b=>{
         agg(b.rows, r=>r.unit||'기타').sort((x,y)=> y.n-x.n || String(x.k).localeCompare(String(y.k),'ko',{numeric:true})).forEach(u=>{
           lines.push(`<div class="row"><span>${esc(o.k)}${b.k?' · '+esc(b.k):''} · ${esc(u.k)}</span><span>${u.n}문항 · ${r1(u.pts)}점</span></div>`); });
       });
       return lines; });
-    byCat.filter(o=>o.k==='외부지문' || o.k==='미확인').forEach(o=> srcDet.push(`<div class="row"><span>${esc(o.k)}</span><span>${o.n}문항 · ${r1(o.pts)}점</span></div>`));
+    byCat.filter(o=>['유인물','쌩외부지문','미확인'].includes(o.k)).forEach(o=> srcDet.push(`<div class="row"><span>${esc(o.k)}</span><span>${o.n}문항 · ${r1(o.pts)}점</span></div>`));
     const s01 = sec('01','출제 출처 구성',`전체 ${N}문항 기준`, `<div class="sb">
       ${donut(catParts, N, {l:tc[0].k, p:pctS(tc[0].n,N), r:`${tc[0].n} / ${N}문항`})}
       <div><table class="lg">${lgHead('출처','문항 수 · 배점','비율')}

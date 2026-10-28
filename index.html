@@ -3,7 +3,6 @@
   에이닷 내신 분석실 (세종아름) · 안내 사이트
   - 안내 문구·버전·프롬프트: assets/content.js
   - 템플릿 파일: tools/simhwa.html, tools/trend.html (교체 후 content.js의 버전 숫자도 올림)
-  - 실험 중: tools/my.html(My 내신분석), tools/note.html(내신 오답노트 양식), 프롬프트는 content.js의 notePrompt
   - 화면 구조: 이 파일 / 디자인: assets/hub.css / 동작: assets/hub.js
 -->
 <html lang="ko">
@@ -29,7 +28,7 @@
       <a href="#simhwa" data-tab="simhwa">심화분석지</a>
       <a href="#trend" data-tab="trend">경향분석지</a>
       <a href="#prompt" data-tab="prompt">프롬프트</a>
-      <a href="#my" data-tab="my">My 내신분석(준비중)</a>
+      <a href="#qna" data-tab="qna">Q&amp;A</a>
     </nav>
     <span class="ver" id="verPill" title="현재 버전"></span>
   </div>
@@ -96,20 +95,6 @@
     <div class="stage"><iframe title="경향분석지 템플릿" data-frame="trend"></iframe></div>
   </section>
 
-  <!-- ───────── My 내신분석 (실험 중) ───────── -->
-  <section class="view tool" id="view-my" data-tool="my" hidden>
-    <div class="toolbar">
-      <div class="tb-l"><b>My 내신분석</b><span class="tv" data-ver="my"></span><span class="hint">심화분석지 불러오기 → 오답노트 사진 + 프롬프트로 받은 JSON 붙여넣기 → 인쇄</span></div>
-      <div class="tb-r">
-        <a class="tbtn" data-open="note" target="_blank" rel="noopener">내신 오답노트 양식</a>
-        <button type="button" class="tbtn primary" id="copyNotePrompt">오답노트 프롬프트 복사</button>
-        <a class="tbtn" id="dlNotePrompt">txt 받기</a>
-        <a class="tbtn" data-open="my" target="_blank" rel="noopener">새 창에서 열기</a>
-      </div>
-    </div>
-    <div class="stage"><iframe title="My 내신분석" data-frame="my"></iframe></div>
-  </section>
-
   <!-- ───────── 프롬프트 ───────── -->
   <section class="view" id="view-prompt" hidden>
     <div class="wrap">
@@ -143,6 +128,16 @@
           </div>
         </aside>
       </div>
+    </div>
+  </section>
+  <!-- ───────── Q&A ───────── -->
+  <section class="view" id="view-qna" hidden>
+    <div class="wrap">
+      <p class="eyebrow">실습·사용 중 나온 질문</p>
+      <h1 class="h1s">Q&amp;A</h1>
+      <p class="note" id="qnaLead"></p>
+      <div class="qtools"><input type="search" id="qnaSearch" placeholder="질문 검색 (예: 출처, 형광펜)" aria-label="질문 검색"><div class="qchips" id="qnaChips"></div></div>
+      <div class="qlist" id="qnaList"></div>
     </div>
   </section>
 </main>
