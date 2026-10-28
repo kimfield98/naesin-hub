@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My 내신분석</title>
+<style>
+  :root{ --accent:#1E3A5F; --line:#C9D2DD; --ink:#1A1F2B; --sub:#4A5260; --faint:#7A8392; --soft:#EEF2F6; --lose:#B5452F; }
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:0}
+  html,body{margin:0;background:#E6E9EE}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);font-size:13px;line-height:1.55;word-break:keep-all}
+
+  /* ── 입력 패널 (화면 전용) ── */
+  .panel{max-width:794px;margin:24px auto 0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px 22px}
+  .panel h2{margin:0 0 4px;font-size:17px;color:var(--accent)}
+  .panel p{margin:0 0 12px;color:var(--sub);font-size:12.5px}
+  .panel .exp{display:inline-block;background:#FFF4D6;color:#6B4E00;border-radius:4px;padding:2px 8px;font-size:12px;margin:2px 0 12px}
+  .stepbox{border-top:1px solid var(--line);padding:12px 0 4px}
+  .sh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .sh b{font-size:14px}
+  .sn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11.5px;font-weight:700;flex:none}
+  .sd{font-size:12px;color:var(--faint)}
+  .stepbox textarea{width:100%;height:110px;margin-top:8px;font:11.5px/1.45 Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+  .examline{margin-top:8px;font-size:12.5px;color:var(--sub)}
+  .examline b{color:var(--ink)}
+  .examline code{font-size:11.5px;background:var(--soft);padding:1px 5px;border-radius:3px}
+  .actions button:disabled{opacity:.4;cursor:default}
+  .actions button.link{background:none;border:0;color:var(--faint);text-decoration:underline;font-weight:400;padding:7px 4px;margin-left:auto}
+  .inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .inputs label{font-size:12px;font-weight:700;color:var(--sub)}
+  .inputs textarea{width:100%;height:120px;margin-top:4px;font:11px/1.4 Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  .actions button{font:inherit;font-weight:700;border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:7px 16px;cursor:pointer}
+  .actions button.ghost{background:#fff;color:var(--accent)}
+  .actions button:focus-visible{outline:3px solid #9BB4D3;outline-offset:2px}
+  .msgs{margin-top:10px;font-size:12.5px}
+  .msgs div{padding:6px 10px;border-radius:5px;margin-top:6px}
+  .msgs .warn{background:#FFF4D6;color:#6B4E00}
+  .msgs .err{background:#FBE3DE;color:#8A2A17}
+  .msgs .ok{background:#E3EFE6;color:#215231}
+
+  /* ── 인쇄 시트 ── */
+  .sheet{width:794px;margin:24px auto;background:#fff;padding:0 46px}
+  table.frame{width:100%;border-collapse:collapse}
+  table.frame > thead td{height:15mm;vertical-align:bottom;padding:0 0 3mm}
+  table.frame > tfoot td{height:11mm}
+  .run{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-bottom:1px solid var(--line);padding-bottom:5px}
+  .run b{color:var(--accent);font-weight:700}
+
+  .cover h1{margin:6px 0 2px;font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .cover .exam{margin:0;font-size:14px;font-weight:700;color:var(--sub)}
+  .cover .range{margin:2px 0 10px;font-size:12px;color:var(--faint)}
+  .cover .bar{height:3px;background:var(--accent)}
+
+  h3{margin:16px 0 7px;font-size:14px;font-weight:800;color:var(--accent);display:flex;justify-content:space-between;align-items:baseline}
+  h3 small{font-size:11px;font-weight:400;color:var(--faint)}
+
+  /* 점수 */
+  .score{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr 1fr;border-bottom:1px solid var(--line)}
+  .score > div{padding:12px 0 10px 14px;border-left:1px solid var(--line)}
+  .score > div:first-child{border-left:0;padding-left:0}
+  .score .k{display:block;font-size:11px;color:var(--faint)}
+  .score .v{display:block;font-size:20px;font-weight:800;line-height:1.25}
+  .score .v small{font-size:12px;font-weight:700;color:var(--sub);margin-left:2px}
+  .score .big .v{font-size:34px;color:var(--accent);letter-spacing:-1px}
+  .score .note{display:block;font-size:11px;color:var(--sub)}
+  .up{color:#215231}.down{color:var(--lose)}
+
+  /* 문항 격자 */
+  .grid{display:grid;grid-template-columns:repeat(15,1fr);border-top:1px solid var(--line);border-left:1px solid var(--line)}
+  .grid div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;padding:3px 0 2px;line-height:1.2}
+  .grid .n{display:block;font-size:10px;color:var(--faint)}
+  .grid .m{display:block;font-size:15px;font-weight:800;color:#B4BBC6}
+  .grid .X{background:var(--accent)} .grid .X .n{color:#C9D6E6} .grid .X .m{color:#fff}
+  .grid .T .m{color:var(--accent)}
+  .grid .kill .n::after{content:'★';color:var(--accent);margin-left:1px}
+  .grid .X.kill .n::after{color:#fff}
+  .legend{display:flex;gap:16px;margin-top:6px;font-size:11px;color:var(--sub)}
+  .legend i{display:inline-block;width:10px;height:10px;border:1px solid var(--line);margin-right:4px;vertical-align:-1px}
+  .legend i.x{background:var(--accent);border-color:var(--accent)}
+
+  /* 자동 요약 */
+  .summary{margin:0;padding:10px 14px;border-left:4px solid var(--accent);background:var(--soft);list-style:none}
+  .summary li{padding:1px 0}
+  .summary b{color:var(--accent)}
+
+  /* 표 */
+  .two{display:grid;grid-template-columns:1.35fr 1fr;gap:24px}
+  table.t{width:100%;border-collapse:collapse;font-size:12px}
+  table.t th{font-weight:700;color:var(--accent);text-align:center;padding:4px;border-top:2px solid var(--accent);border-bottom:1px solid var(--accent);white-space:nowrap}
+  table.t td{text-align:center;padding:1px 4px;border-bottom:1px solid #E3E8EE;height:21px}
+  table.t td.l{text-align:left}
+  table.t td.lose{color:var(--lose);font-weight:700}
+  table.t tr.zero td{color:#9AA2AE}
+  table.t tr.zero td.lose{color:#9AA2AE;font-weight:400}
+  table.t tr.zero .fill{background:var(--line)}
+  .allok{margin:6px 0 0;font-size:12px;color:var(--sub)}
+  .allok b{color:var(--ink)}
+  .rate{display:flex;align-items:center;gap:6px}
+  .rate .track{flex:1;height:8px;background:var(--soft);border-radius:2px;overflow:hidden}
+  .rate .fill{height:100%;background:var(--accent)}
+  .rate span{width:34px;text-align:right;font-size:11px;color:var(--sub)}
+
+  .killers{margin:8px 0 0;padding:0;list-style:none;font-size:12px}
+  .killers li{display:flex;justify-content:space-between;border-bottom:1px solid #E3E8EE;padding:3px 0}
+  .tagX{color:var(--lose);font-weight:700}.tagO{color:#215231;font-weight:700}.tagT{color:var(--accent);font-weight:700}
+
+  /* 틀린 이유 */
+  .reasons{margin:0;padding:0;list-style:none}
+  .reasons li{display:grid;grid-template-columns:118px 1fr 34px;align-items:center;gap:8px;height:24px;border-bottom:1px solid #E3E8EE;font-size:12px}
+  .reasons .track{height:10px;background:var(--soft);border-radius:2px;overflow:hidden}
+  .reasons .fill{height:100%;background:var(--accent)}
+  .reasons b{text-align:right}
+  .reasons li.zero{color:#9AA2AE}
+
+  /* 오답 상세 */
+  .page2{break-before:page}
+  .item{padding:0 0 12px;break-inside:avoid-page}
+  .item + .item{border-top:1px dashed var(--line);padding-top:12px}
+  .ihead{display:grid;grid-template-columns:62px 1fr;gap:12px;border-left:5px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:8px}
+  .ihead.T{border-left-color:#9BB4D3}
+  .ino{font-size:20px;font-weight:800;color:var(--accent);display:flex;flex-direction:column;justify-content:center;line-height:1.1;letter-spacing:-.5px}
+  .ino small{font-size:11px;font-weight:700;letter-spacing:0}
+  .cells{display:grid;grid-template-columns:40px 1fr 66px 46px 132px;gap:2px 12px;align-items:end}
+  .cell .k{display:block;font-size:11px;color:var(--faint)}
+  .cell .v{display:block;font-size:13px;font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px 17px}
+  .chip{border:1.5px solid var(--accent);border-radius:4px;padding:0 6px;font-size:11.5px;font-weight:700;color:var(--accent)}
+  .rows{margin:0 0 0 17px;font-size:12.5px}
+  .rows div{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:1px 0}
+  .rows dt,.rows .lab{color:var(--faint);font-size:11.5px;padding-top:1px}
+  .empty{color:#9AA2AE}
+  .none-msg{padding:24px;text-align:center;color:var(--sub);border:1px dashed var(--line);border-radius:6px}
+
+  [hidden]{display:none!important}
+  @media print{
+    html,body{background:#fff}
+    .panel{display:none}
+    .sheet{margin:0;padding:0 46px}
+  }
+  @media screen and (max-width:820px){
+    .sheet{transform-origin:top left}
+    .inputs{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<section class="panel" aria-label="데이터 입력">
+  <h2>My 내신분석</h2>
+  <p class="exp">실험 중인 기능입니다. 출력물을 학생·학부모에게 주기 전에 내용을 꼭 확인하세요.</p>
+
+  <div class="stepbox">
+    <div class="sh"><span class="sn">1</span><b>심화분석지 불러오기</b><span class="sd">학교 시험마다 한 번. 이 브라우저에 기억됩니다.</span></div>
+    <div class="actions">
+      <button type="button" id="loadExam">심화분석지 파일 불러오기</button>
+      <button type="button" class="ghost" id="openNote" disabled>이 시험용 내신 오답노트 열기</button>
+      <input type="file" id="examFile" accept=".html,.htm,.json" hidden>
+    </div>
+    <div class="examline" id="examLine">아직 불러온 시험이 없습니다. <code>…_심화분석_검수완료.html</code> 파일을 고르세요.</div>
+  </div>
+
+  <div class="stepbox">
+    <div class="sh"><span class="sn">2</span><b>학생 데이터 붙여넣기</b><span class="sd">내신 오답노트 사진 + 오답노트 프롬프트로 받은 JSON. 저장되지 않습니다.</span></div>
+    <textarea id="stuIn" spellcheck="false" placeholder="AI가 준 JSON 코드블록을 통째로 붙여 넣으세요."></textarea>
+    <div class="actions">
+      <button type="button" id="build">분석지 만들기</button>
+      <button type="button" class="ghost" id="print" disabled>인쇄</button>
+      <button type="button" class="link" id="sample">예시로 보기</button>
+    </div>
+  </div>
+  <div class="msgs" id="msgs" role="status"></div>
+</section>
+
+<main class="sheet" id="sheet" hidden>
+  <table class="frame">
+    <thead><tr><td><div class="run"><span id="runL"></span><span id="runR"></span></div></td></tr></thead>
+    <tfoot><tr><td></td></tr></tfoot>
+    <tbody><tr><td id="out"></td></tr></tbody>
+  </table>
+</main>
+
+<script type="application/json" id="examData">{"meta": {"academy": "에이닷 영어학원 세종아름지점", "school": "대성고", "grade": "고1", "exam": "2026년 2학기 중간고사", "date": "2026.10.26 분석", "range": "공통영어2 YBM(김은형) 1~2과 · EBS 올림포스 영어독해 기본 01 Unit 11·12·14·15·16 · 2026년 9월 고1 모의고사(인천) 18~45번", "reviewer": "김초원", "stage": "AI 초안"}, "items": [{"no": "1", "points": 1.8, "answer": "③", "type": "삽입", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 1과 Young Change-Makers Shaping the Future (Combating Online Hate with ReThink)"}, "methods": ["원문 그대로"], "basis": "주어진 문장의 the story는 ③ 앞의 '사이버 괴롭힘을 당한 소녀의 비극적인 소식'을 가리키고, 그 결과 ReThink를 만들었으므로 ③ 뒤 'ReThink has been used …'로 자연스럽게 이어진다. ①·② 뒤는 ReThink 기능 설명이 이어지는 자리라 '만들었다'가 들어갈 수 없다.", "eval": {"difficulty": "하", "killer": false}}, {"no": "2", "points": 2.8, "answer": "④", "type": "어휘", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 1과 Young Change-Makers Shaping the Future (Inventing with Discarded Electronic Parts)"}, "methods": ["어휘 바꿈"], "basis": "라디오가 주된 매체였던 나라에서 학교가 닫힌 동안 라디오 교육 방송은 '중요했다(important)'. ④ trivial(사소한)은 흐름과 반대다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "3", "points": 1.9, "answer": "③", "type": "제목", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 1과 Young Change-Makers Shaping the Future (Inventing with Discarded Electronic Parts)"}, "methods": ["어휘 바꿈"], "basis": "Kelvin이 버려진 전자 기기로 실험해 라디오 방송국·배터리·발전기 등을 만든 이야기이므로 ③이 제목이다. ③은 교과서 소단원 제목 그대로다. ①·②·④는 지문 일부 소재만 따온 함정이다.", "eval": {"difficulty": "하", "killer": false}}, {"no": "4", "points": 2, "answer": "⑤", "type": "빈칸", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 1과 Young Change-Makers Shaping the Future (Helping Homeless People Rebuild Their Lives)"}, "methods": ["원문 그대로"], "basis": "노숙 생활을 하던 사람들에게 다시 집에 있는 것은 '승리이자 평화'이고, 소박한 가구 하나가 큰 영향을 준다고 했으므로 가구는 가족의 '존엄성을 회복시킨다'. 교과서 원문 그대로다.", "eval": {"difficulty": "하", "killer": false}}, {"no": "5", "points": 2.9, "answer": "③", "type": "어법", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 1과 Young Change-Makers Shaping the Future (Helping Homeless People Rebuild Their Lives)"}, "methods": ["어휘 바꿈"], "basis": "that절의 주어 many of the shelter residents에 대해 worked와 but으로 병렬 연결되는 과거 시제 동사가 와야 하므로 ③ face는 faced가 되어야 한다. ② where(장소 관계부사), ④ Needing(이유 분사구문), ⑤ get settled(help+O+동사원형)는 옳다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "6", "points": 3, "answer": "③", "type": "어휘", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 2과 K-Delivery, Speedy and Reliable (The Origins of Korean Delivery Services)"}, "methods": ["어휘 바꿈"], "basis": "배달 실수가 드물었고 고객들이 물건을 확인하지 않을 만큼 신뢰했으므로 메신저는 정직하고 '정확했다(accurate)'. ③ flawed(결함이 있는)는 honest와 함께 쓰일 수 없고 뒤 문장과도 모순된다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "7", "points": 2.1, "answer": "②", "type": "순서", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 2과 K-Delivery, Speedy and Reliable (The Growth of Delivery After Liberation)"}, "methods": ["원문 그대로"], "basis": "(B)의 this series of upheavals는 주어진 글의 분단·전쟁을 받는다. (A)의 This는 (B) 끝의 도시화·도시 인구 집중을 가리키며, (C)는 1980~90년대로 시간상 마지막이다 → (B)-(A)-(C).", "eval": {"difficulty": "중", "killer": false}}, {"no": "8", "points": 2.2, "answer": "⑤", "type": "삽입", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 2과 K-Delivery, Speedy and Reliable (The Rise of Taekbae in Korea)"}, "methods": ["원문 그대로"], "basis": "⑤ 앞은 '익일 배송'이 원칙이라는 내용이고, 주어진 문장은 이제는 '당일 배송'까지 된다는 변화이다. 그 뒤 '날짜·시간 지정도 가능하다(also)'로 서비스의 발전이 이어진다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "9", "points": 3.1, "answer": "④", "type": "어법", "source": {"cat": "교과서", "detail": "공통영어2 YBM(김은형) 2과 K-Delivery, Speedy and Reliable (Technological Innovation in Delivery Services)"}, "methods": ["어휘 바꿈"], "basis": "as절은 앞의 일반동사 function을 대신하므로 대동사 does가 와야 한다. ④ is는 틀렸다. ① 분사구문, ② 진행 수동(are being used), ③ 형용사, ⑤ continue -ing는 옳다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "10", "points": 3.2, "answer": "①", "type": "어휘", "source": {"cat": "미확인", "detail": "교과서 1~2과 어휘(initiative·innovative·specialize·deliver·transportation)의 영영 풀이 — 풀이 원문은 자료에 없음"}, "methods": [], "basis": "①의 풀이(무언가를 하도록 장려·동기 부여하는 것)는 incentive(동기, 장려책)의 뜻이다. initiative는 '주도권, 스스로 판단해 행동하는 능력·진취성'이다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "11", "points": 4.3, "answer": "④", "type": "어법", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 23번"}, "methods": ["어휘 바꿈"], "basis": "현재 사실과 반대되는 가정법 과거 문장이다. 삽입절 if there were와 주절 might become이 과거형이므로 ④ have는 had가 되어야 한다. ② 주어 One of ~ insights는 단수라 was가 옳다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "12", "points": 4.4, "answer": "⑤", "type": "어법", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 31번"}, "methods": ["어휘 바꿈"], "basis": "콤마 뒤 계속적 용법이고 전치사 by 뒤이므로 관계대명사 that은 쓸 수 없다. ⑤는 which가 되어야 한다(by which I mean). ① 사람 선행사 who, ③ 선행사 없는 what, ④ 과거분사 involved는 옳다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "13", "points": 4.5, "answer": "④", "type": "어휘", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 33번"}, "methods": ["어휘 바꿈"], "basis": "폴록은 '의도적으로(intentionally)' 대상을 복제하지 않았으므로, 대상을 닮은 표시를 '의식적으로(consciously)' 피했다고 해야 한다. ④ unconsciously는 앞 문장과 모순된다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "14", "points": 3.3, "answer": "①", "type": "빈칸", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 29번"}, "methods": ["원문 그대로"], "basis": "운동 초반에는 산소 공급이 따라잡지 못해 무산소 호흡을 쓰지만, 워밍업 후 운동이 쉬워지는 것은 몸이 효율적인 유산소 호흡으로 '전환했기' 때문이다. ②는 무산소(예비 체계)에 계속 의존한다는 반대 방향이다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "15", "points": 3.4, "answer": "②", "type": "순서", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 21번"}, "methods": ["원문 그대로"], "basis": "주어진 글의 '움직이지 않음'을 (B)가 의자에 앉아 있는 생활과 스마트 기기에 사로잡힌 아이들로 구체화한다. (A)의 As a result는 (B)에서 밖에 나가 놀지 않은 결과이고, (C)의 Instead는 (A)의 '달리기·뛰기·오르기를 배우지 않음' 대신 불안·우울을 배운다는 흐름이다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "16", "points": 3.5, "answer": "③", "type": "내용일치", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 11 Exercise 02"}, "methods": ["원문 그대로", "형식 변환"], "basis": "마지막 문장에서 이해하는 사람은 칵테일파티에서 보통 일어나는 일을 알려 주는 각본을 꺼내 이야기를 이해했다 → ③. ①은 '기억이 달라서'를 '같은 기억'으로, ②·④·⑤는 지문 내용을 정반대로 바꿨다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "17", "points": 2.4, "answer": "⑤", "type": "함의추론", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 12 ANALYSIS"}, "methods": ["원문 그대로", "형식 변환"], "basis": "시각(양쪽 살피기)과 청각(엔진 소음 듣기)이 모두 중요하다는 글이다. both cues는 시각·청각 신호이고 the difference between life and death는 생존과 직결된다는 뜻이므로 ⑤가 적절하다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "18", "points": 2.5, "answer": "②", "type": "제목", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 12 Practice 01"}, "methods": ["어휘 바꿈"], "basis": "첫 문장(편리함·취향 변화로 전통이 바뀜)이 주제문이고, 통조림 호박(편리함)과 라드 대신 쇼트닝(건강) 예시가 이어진다 → ②. ①·③은 '영원히 버려짐, 완전한 소멸'로 과장했다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "19", "points": 2.6, "answer": "④", "type": "주장", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 12 Practice 03"}, "methods": ["원문 그대로", "형식 변환"], "basis": "리더는 의견 불일치를 예상하고 오히려 찾아내야 한다. 다른 견해는 좋은 아이디어를 주고(첫째), 초반에 해결하기 쉽기 때문이다(둘째) → ④. ②는 갈등을 막아야 한다는 반대 주장이다.", "eval": {"difficulty": "하", "killer": false}}, {"no": "20", "points": 3.6, "answer": "③", "type": "요지", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 14 ANALYSIS"}, "methods": ["원문 그대로", "형식 변환"], "basis": "방관자의 불개입은 성격 결함이 아니라 '상황'이 행동을 제약하기 때문이며, 방관자가 많을수록 책임이 분산된다는 것이 요지다 → ③. ②는 필자가 부정한 내용, ①·⑤는 책임 분산과 반대다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "21", "points": 2.7, "answer": "⑤", "type": "어휘", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 15 ANALYSIS"}, "methods": ["어휘 바꿈"], "basis": "(A) 금리 인상은 대출을 통한 통화 창출을 '억제(hinder)'한다(뒤에 돈이 유통에서 사라짐). (B) 앞 문장의 '증가한 비용'을 받으므로 Rising. (C) 채무 불이행 '이후에 따르는(subsequent)' 통화 축소다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "22", "points": 3.7, "answer": "①", "type": "빈칸", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 16 ANALYSIS"}, "methods": ["문장 삭제", "형식 변환"], "basis": "비판을 받으면 자아가 우리를 보호하려고 끼어들어, 생각을 개선하기보다 방어하게 된다(원문 We become invested in defending instead of upgrading our ideas). 즉 생각을 다듬어 줄 피드백에 닫히게 된다 → ①. ④는 반대 방향, ②·③은 '인정 추구'로 초점이 다르다.", "eval": {"difficulty": "상", "killer": false}}, {"no": "23", "points": 3.8, "answer": "②", "type": "내용일치", "source": {"cat": "부교재", "detail": "EBS 올림포스 영어독해 기본 01 Unit 16 Practice 01"}, "methods": ["문장 삭제", "형식 변환"], "basis": "첫 문장에서 감정 패러다임은 '규범적인 집단 행동의 도움으로(with the help of normative group behaviors)' 실현되고 굳어진다고 했다 → ②. ④는 crying is criticized에서 따온 함정이지만 지문은 '비판받지만 용서된다'고 했다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "24", "points": 4.6, "answer": "②", "type": "요약문", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 22번"}, "methods": ["원문 그대로"], "basis": "'가장 강력하게 끌어당기는 것은 신념 체계'이므로 (A)는 beliefs, '욕구와 모순되는 제한적인 신념(limiting beliefs)'을 바꾸라고 했으므로 (B)는 restrictive이다. ①의 thoughts는 요약문의 rather than mere thoughts와 모순된다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "25", "points": 3.9, "answer": "④", "type": "요지", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 30번"}, "methods": ["어휘 바꿈"], "basis": "단락을 짧게 유지하라고 하면서도 '너무 지나치지는 마라', 아주 짧은 단락의 연속도 너무 긴 단락만큼 짜증스럽다고 했다 → ④. ③·⑤는 짧은 단락만 강조해 후반부를 놓친 함정, ②는 반대다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "26", "points": 4, "answer": "⑤", "type": "빈칸", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 32번"}, "methods": ["원문 그대로"], "basis": "감정은 자동 반응이 아니라 사건을 해석하는 방식(판단)에 의해 형성되며, 판단을 바꾸면 감정이 바뀐다 → ⑤. 원문 'our emotions are not random; they arise from our judgments'를 패러프레이징한 선지다. ②·④는 '자동 반응'이라는 반대 입장이다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "27", "points": 4.7, "answer": "④", "type": "어휘", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 38번"}, "methods": ["어휘 바꿈"], "basis": "공동체가 커지면 신체 부위 기준의 단순한 체계의 부적절함이 '분명해지고(evident)', 그래서 무역 갈등에서 더 큰 일관성이 요구된다. ④ become obscure(모호해지다)는 though의 역접 흐름과 뒤 문장에 맞지 않는다.", "eval": {"difficulty": "상", "killer": true}}, {"no": "28", "points": 4.1, "answer": "④", "type": "주제", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 40번"}, "methods": ["원문 그대로"], "basis": "첫 문장이 주제문이다. 자존감은 진화적으로 관계의 질을 감시하는 장치로 발달했고, 이후 그 작동 방식(경보, 무의식→의식)을 설명한다 → ④. ③·⑤는 지문 속 conscious/nonconscious 표현을 이용한 함정이다.", "eval": {"difficulty": "중", "killer": false}}, {"no": "29", "points": 4.8, "answer": "②", "type": "어휘", "source": {"cat": "모의고사", "detail": "2026년 9월 고1 모의고사(인천) 41~42번"}, "methods": ["어휘 바꿈"], "basis": "예전에는 대중에게 목소리를 내려면 규칙 제정자들의 한계 안에서 인쇄·방송 매체의 엄격한 기대에 '순응하며' 활동해야 했다. 시험지는 conforming 앞에 not을 넣어 의미를 뒤집었으므로 ② not conforming이 문맥상 적절하지 않다.", "eval": {"difficulty": "상", "killer": true}}, {"no": "30", "points": 4.2, "answer": "③", "type": "어법", "source": {"cat": "미확인", "detail": ""}, "methods": [], "basis": "in which 뒤에는 완전한 절이 와야 한다. ③은 reason should impose (    ) on the desire에서 impose의 목적어가 빠진 불완전한 절이므로 목적격 관계대명사 that/which가 와야 하고 in which는 쓸 수 없다. 나머지는 모두 뒤 절이 완전하다.", "eval": {"difficulty": "상", "killer": false}}]}</script>
+<script type="application/json" id="stuData">{"schemaVersion": 1, "form": "내신 오답노트 v1", "exam": {"school": "대성고", "grade": "고1", "exam": "2026년 2학기 중간고사"}, "student": {"name": "홍길동", "teacher": "김초원"}, "scores": {"actual": 74.7, "previous": 68.5, "target": 85}, "counts": {"X": 6, "T": 2}, "items": [{"no": "7", "mark": "△", "reasons": [3], "note": "(B)와 (C) 순서 사이에서 고민하다 찍었음"}, {"no": "10", "mark": "X", "reasons": [1], "note": "initiative 뜻을 몰랐음"}, {"no": "12", "mark": "X", "reasons": [2, 7], "note": "관계사절이 길어서 주어 동사를 못 찾음"}, {"no": "13", "mark": "X", "reasons": [3], "note": "앞뒤 흐름을 안 보고 단어만 봄"}, {"no": "22", "mark": "X", "reasons": [5, 3], "note": "원문에 있던 문장이 빠져서 다른 글처럼 보였음"}, {"no": "25", "mark": "△", "reasons": [6], "note": "시간이 없어서 마지막에 급하게 풂"}, {"no": "27", "mark": "X", "reasons": [1, 4], "note": "obscure 뜻을 몰랐고, ③이 원문 단어와 달라서 골랐음"}, {"no": "29", "mark": "X", "reasons": [1, 3], "note": "지문이 길고 어려워서 근거를 못 찾음"}], "checks": []}</script>
+<!-- 예시: 대성고 고1 2026년 2학기 중간고사(AI 초안) + 가상의 학생 -->
+<script>
+const REASONS = {1:'① 단어 모름',2:'② 구문 해석',3:'③ 근거 못 찾음',4:'④ 선지 함정',5:'⑤ 변형 못 알아봄',6:'⑥ 시간 부족',7:'⑦ 실수'};
+const CAT_ORDER = ['교과서','모의고사','부교재','외부지문','미확인'];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const order = no => { const t = String(no); const m = t.match(/\d+/); const n = m ? +m[0] : 999; return /서답/.test(t) ? 1000 + n : n; };
+const r1 = n => Math.round(n*10)/10;
+const fmt = n => (Number.isInteger(r1(n)) ? r1(n).toFixed(0) : r1(n).toFixed(1));
+
+function shortSource(src){
+  const d = src.detail || '';
+  if (src.cat === '교과서'){ const m = d.match(/(\d+)과/); return '교과서 ' + (m ? m[1]+'과' : ''); }
+  if (src.cat === '모의고사'){ const y = d.match(/(\d{2})(\d{2})년\s*(\d+)월/); const n = d.match(/([\d~]+)번/);
+    return (y ? y[2]+'년 '+y[3]+'월 ' : '모의 ') + (n ? n[1]+'번' : ''); }
+  if (src.cat === '부교재'){ const u = d.match(/Unit\s*(\d+)/i); return '부교재 ' + (u ? 'Unit '+u[1] : ''); }
+  return src.cat || '미확인';
+}
+
+function tally(items, keyFn){
+  const map = new Map();
+  for (const it of items){
+    for (const k of [].concat(keyFn(it))){
+      if (!map.has(k)) map.set(k, {key:k, n:0, ok:0, pts:0, lost:0});
+      const g = map.get(k); g.n++; g.pts += it.points;
+      if (it.mark === 'X') g.lost += it.points; else g.ok++;
+    }
+  }
+  return [...map.values()].map(g => ({...g, rate: g.pts ? (g.pts-g.lost)/g.pts : 0}));
+}
+
+function rateCell(rate){
+  const p = Math.round(rate*100);
+  return `<div class="rate"><div class="track"><div class="fill" style="width:${p}%"></div></div><span>${p}%</span></div>`;
+}
+
+function render(exam, stu){
+  const msgs = [];
+  const meta = exam.meta || {};
+  const marks = new Map();
+  for (const s of (stu.items || [])) marks.set(String(s.no), s);
+  const known = new Set(exam.items.map(i => String(i.no)));
+  for (const no of marks.keys()) if (!known.has(no)) msgs.push(['err', `학생 데이터의 ${no}번은 시험 데이터에 없는 문항입니다. 번호를 확인하세요.`]);
+  const undone = exam.items.filter(i => !i.eval || i.eval.status !== 'done').length;
+  if (undone) msgs.push(['warn', `심화분석지에 검수 전 문항이 ${undone}개 있습니다. 정답·배점을 검수한 파일로 출력하는 것을 권장합니다.`]);
+  for (const c of (stu.checks || [])) msgs.push(['warn', `AI 확인 요청: ${esc(c)}`]);
+  if (stu.exam && (stu.exam.school !== meta.school || stu.exam.exam !== meta.exam))
+    msgs.push(['err', `학생 데이터의 시험(${esc(stu.exam.school)} ${esc(stu.exam.exam)})과 시험 데이터(${esc(meta.school)} ${esc(meta.exam)})가 다릅니다.`]);
+
+  const items = exam.items.map(i => {
+    const s = marks.get(String(i.no)) || {};
+    return {...i, eval: i.eval || {}, source: i.source || {}, mark: s.mark === 'X' ? 'X' : (s.mark === '△' ? '△' : 'O'), reasons: s.reasons || [], note: s.note || ''};
+  }).sort((a,b) => order(a.no) - order(b.no));
+  const total = items.reduce((a,i) => a + i.points, 0);
+  const lost = items.filter(i => i.mark === 'X').reduce((a,i) => a + i.points, 0);
+  const calc = total - lost;
+  const okN = items.filter(i => i.mark !== 'X').length;
+  const sc = stu.scores || {};
+  const actual = (typeof sc.actual === 'number') ? sc.actual : calc;
+  if (typeof sc.actual === 'number' && Math.abs(sc.actual - calc) > 0.05)
+    msgs.push(['warn', `실제 점수(${fmt(sc.actual)}점)와 틀린 문항으로 계산한 점수(${fmt(calc)}점)가 ${fmt(Math.abs(sc.actual-calc))}점 다릅니다. 틀린 문항 번호를 다시 확인하세요.`]);
+  const cnt = stu.counts || {};
+  const nX = items.filter(i => i.mark === 'X').length, nT = items.filter(i => i.mark === '△').length;
+  if (typeof cnt.X === 'number' && cnt.X !== nX) msgs.push(['warn', `학생이 쓴 틀린 문항 수(${cnt.X}개)와 기록된 X 문항 수(${nX}개)가 다릅니다.`]);
+  if (typeof cnt.T === 'number' && cnt.T !== nT) msgs.push(['warn', `학생이 쓴 헷갈린 문항 수(${cnt.T}개)와 기록된 △ 문항 수(${nT}개)가 다릅니다.`]);
+  if (!msgs.some(m => m[0] !== 'ok')) msgs.push(['ok', '데이터 확인 완료. 점수와 문항 번호가 일치합니다.']);
+
+  // 집계
+  const bySrc = tally(items, i => i.source.cat || '미확인').sort((a,b) => CAT_ORDER.indexOf(a.key) - CAT_ORDER.indexOf(b.key));
+  const byType = tally(items, i => i.type).sort((a,b) => b.lost - a.lost || b.pts - a.pts);
+  const byDiff = tally(items, i => i.eval.difficulty || '–').sort((a,b) => '상중하'.indexOf(a.key) - '상중하'.indexOf(b.key));
+  const byMethod = tally(items.filter(i => i.methods && i.methods.length), i => i.methods).sort((a,b) => b.lost - a.lost || b.n - a.n);
+  const reasonCount = {1:0,2:0,3:0,4:0,5:0,6:0,7:0};
+  for (const i of items) if (i.mark !== 'O') for (const r of i.reasons) if (reasonCount[r] !== undefined) reasonCount[r]++;
+  const maxReason = Math.max(1, ...Object.values(reasonCount));
+  const wrong = items.filter(i => i.mark === 'X');
+  const tricky = items.filter(i => i.mark === '△');
+  const killers = items.filter(i => i.eval.killer);
+
+  // 자동 요약 (사실만)
+  const sum = [];
+  const topSrc = [...bySrc].sort((a,b) => b.lost - a.lost)[0];
+  const topType = byType[0];
+  const topReason = Object.entries(reasonCount).sort((a,b) => b[1]-a[1])[0];
+  if (lost === 0) sum.push('틀린 문항이 없습니다.');
+  else {
+    if (topSrc && topSrc.lost > 0) sum.push(`가장 많이 잃은 출처는 <b>${esc(topSrc.key)}</b>입니다. ${topSrc.n}문항 중 ${topSrc.n-topSrc.ok}문항을 틀려 ${fmt(topSrc.lost)}점을 잃었습니다.`);
+    if (topType && topType.lost > 0) sum.push(`가장 많이 잃은 유형은 <b>${esc(topType.key)}</b>입니다. ${topType.n}문항 중 ${topType.n-topType.ok}문항, ${fmt(topType.lost)}점입니다.`);
+  }
+  if (topReason && topReason[1] > 0) sum.push(`가장 자주 나온 틀린 이유는 <b>${REASONS[topReason[0]]}</b>(${topReason[1]}회)입니다.`);
+  if (tricky.length) sum.push(`맞혔지만 헷갈린 문항이 ${tricky.length}개 있습니다. 다음 시험 전에 함께 복습하세요.`);
+
+  const diff = (typeof sc.previous === 'number') ? actual - sc.previous : null;
+  const toTarget = (typeof sc.target === 'number') ? sc.target - actual : null;
+  const name = stu.student?.name || '학생';
+
+  document.getElementById('runL').innerHTML = `<b>My 내신분석</b> ${esc(meta.school)} ${esc(meta.grade)} ${esc(meta.exam)}`;
+  document.getElementById('runR').textContent = `${name}${stu.student?.teacher ? ' · 담당 ' + stu.student.teacher : ''}`;
+  document.title = `${name}_${meta.school}_${meta.grade}_${meta.exam}_My내신분석`;
+
+  const reasonLabels = i => i.reasons.map(r => `<span class="chip">${esc(REASONS[r] || r)}</span>`).join('');
+
+  const detail = [...wrong, ...tricky].sort((a,b) => order(a.no) - order(b.no)).map(i => `
+    <div class="item">
+      <div class="ihead ${i.mark === '△' ? 'T' : ''}">
+        <div class="ino">${esc(String(i.no).replace('서답','서'))}번<small class="${i.mark === 'X' ? 'tagX' : 'tagT'}">${i.mark === 'X' ? '틀림' : '헷갈림'}</small></div>
+        <div class="cells">
+          <div class="cell"><span class="k">배점</span><span class="v">${fmt(i.points)}</span></div>
+          <div class="cell"><span class="k">출처</span><span class="v">${esc(shortSource(i.source))}</span></div>
+          <div class="cell"><span class="k">유형</span><span class="v">${esc(i.type)}</span></div>
+          <div class="cell"><span class="k">난이도</span><span class="v">${esc((i.eval.difficulty || '–'))}${i.eval.killer ? ' ★' : ''}</span></div>
+          <div class="cell"><span class="k">변형</span><span class="v">${esc((i.methods||[]).join(', ') || '확인 안 됨')}</span></div>
+        </div>
+      </div>
+      ${i.reasons.length ? `<div class="chips">${reasonLabels(i)}</div>` : ''}
+      <div class="rows">
+        <div><span class="lab">내 메모</span><span class="${i.note ? '' : 'empty'}">${esc(i.note || '작성하지 않음')}</span></div>
+        <div><span class="lab">정답 근거</span><span>정답 ${esc(i.answer)}. ${esc(i.basis || '')}</span></div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('out').innerHTML = `
+  <section class="cover">
+    <h1>${esc(name)} 학생 내신 분석</h1>
+    <p class="exam">${esc(meta.school)} ${esc(meta.grade)} ${esc(meta.exam)}</p>
+    <p class="range">시험범위 ${esc(meta.range || '')}</p>
+    <div class="bar"></div>
+  </section>
+
+  <div class="score">
+    <div class="big"><span class="k">이번 시험 점수</span><span class="v">${fmt(actual)}<small>점</small></span></div>
+    <div><span class="k">맞힌 문항</span><span class="v">${okN}<small>/ ${items.length}</small></span><span class="note">헷갈림 ${tricky.length}문항 포함</span></div>
+    <div><span class="k">잃은 점수</span><span class="v down">${fmt(lost)}<small>점</small></span><span class="note">틀린 ${wrong.length}문항</span></div>
+    <div><span class="k">이전 시험 대비</span><span class="v ${diff === null ? '' : diff >= 0 ? 'up' : 'down'}">${diff === null ? '–' : (diff >= 0 ? '+' : '') + fmt(diff)}<small>${diff === null ? '' : '점'}</small></span><span class="note">${typeof sc.previous === 'number' ? '이전 ' + fmt(sc.previous) + '점' : '기록 없음'}</span></div>
+    <div><span class="k">목표까지</span><span class="v">${toTarget === null ? '–' : toTarget <= 0 ? '달성' : fmt(toTarget)}<small>${toTarget > 0 ? '점' : ''}</small></span><span class="note">${typeof sc.target === 'number' ? '목표 ' + fmt(sc.target) + '점' : '목표 미설정'}</span></div>
+  </div>
+
+  <h3>문항별 결과<small>★ 킬러 문항</small></h3>
+  <div class="grid">${items.map(i => `<div class="${i.mark === 'X' ? 'X' : i.mark === '△' ? 'T' : ''} ${i.eval.killer ? 'kill' : ''}"><span class="n">${esc(String(i.no).replace('서답','서'))}</span><span class="m">${i.mark === 'X' ? '✕' : i.mark === '△' ? '△' : '○'}</span></div>`).join('')}</div>
+  <div class="legend"><span><i></i>○ 맞음</span><span><i></i>△ 맞았지만 헷갈림</span><span><i class="x"></i>✕ 틀림</span></div>
+
+  <h3>한 줄로 보는 결과<small>시험 데이터와 학생 기록으로 자동 계산</small></h3>
+  <ul class="summary">${sum.map(s => `<li>${s}</li>`).join('')}</ul>
+
+  <div class="two">
+    <div>
+      <h3>출처별 결과<small>득점률 = 얻은 점수 ÷ 배점</small></h3>
+      <table class="t">
+        <thead><tr><th>출처</th><th>문항</th><th>맞힘</th><th>배점</th><th>잃은 점수</th><th style="width:30%">득점률</th></tr></thead>
+        <tbody>${bySrc.map(g => `<tr class="${g.lost ? '' : 'zero'}"><td class="l">${esc(g.key)}</td><td>${g.n}</td><td>${g.ok}</td><td>${fmt(g.pts)}</td><td class="lose">${g.lost ? '−' + fmt(g.lost) : '0'}</td><td>${rateCell(g.rate)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div>
+      <h3>난이도별 결과</h3>
+      <table class="t">
+        <thead><tr><th>난이도</th><th>문항</th><th>맞힘</th><th>잃은 점수</th></tr></thead>
+        <tbody>${byDiff.map(g => `<tr class="${g.lost ? '' : 'zero'}"><td>${esc(g.key)}</td><td>${g.n}</td><td>${g.ok}</td><td class="lose">${g.lost ? '−' + fmt(g.lost) : '0'}</td></tr>`).join('')}</tbody>
+      </table>
+      <ul class="killers">${killers.length ? killers.map(k => `<li><span>★ ${esc(k.no)}번 ${esc(k.type)} · ${esc(shortSource(k.source))}</span><span class="${k.mark === 'X' ? 'tagX' : k.mark === '△' ? 'tagT' : 'tagO'}">${k.mark === 'X' ? '틀림' : k.mark === '△' ? '헷갈림' : '맞음'}</span></li>`).join('') : '<li>킬러 문항 없음</li>'}</ul>
+    </div>
+  </div>
+
+  <h3>유형별 결과<small>틀린 유형만, 잃은 점수가 큰 순서</small></h3>
+  <table class="t">
+    <thead><tr><th>유형</th><th>문항</th><th>맞힘</th><th>배점</th><th>잃은 점수</th><th style="width:34%">득점률</th></tr></thead>
+    <tbody>${byType.filter(g => g.lost).map(g => `<tr><td class="l">${esc(g.key)}</td><td>${g.n}</td><td>${g.ok}</td><td>${fmt(g.pts)}</td><td class="lose">−${fmt(g.lost)}</td><td>${rateCell(g.rate)}</td></tr>`).join('') || '<tr><td colspan="6">틀린 유형이 없습니다.</td></tr>'}</tbody>
+  </table>
+  ${byType.some(g => !g.lost) ? `<p class="allok"><b>모두 맞힌 유형</b> ${byType.filter(g => !g.lost).map(g => esc(g.key) + ' ' + g.n).join(', ')}</p>` : ''}
+
+  <section class="page2">
+    <div class="two">
+      <div>
+        <h3>틀린 이유<small>틀림·헷갈림 문항, 중복 선택 포함</small></h3>
+        <ul class="reasons">${Object.entries(reasonCount).map(([k,v]) => `<li class="${v ? '' : 'zero'}"><span>${REASONS[k]}</span><div class="track"><div class="fill" style="width:${Math.round(v/maxReason*100)}%"></div></div><b>${v}회</b></li>`).join('')}</ul>
+      </div>
+      <div>
+        <h3>변형 방식별 결과<small>원문과 비교한 문항</small></h3>
+        <table class="t">
+          <thead><tr><th>변형 방식</th><th>문항</th><th>맞힘</th><th>잃은 점수</th></tr></thead>
+          <tbody>${byMethod.map(g => `<tr class="${g.lost ? '' : 'zero'}"><td class="l">${esc(g.key)}</td><td>${g.n}</td><td>${g.ok}</td><td class="lose">${g.lost ? '−' + fmt(g.lost) : '0'}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>다시 볼 문항<small>틀림 ${wrong.length} · 헷갈림 ${tricky.length}</small></h3>
+    ${detail || '<div class="none-msg">틀리거나 헷갈린 문항이 없습니다.</div>'}
+  </section>`;
+
+  document.getElementById('msgs').innerHTML = msgs.map(([t,m]) => `<div class="${t}">${m}</div>`).join('');
+  document.getElementById('sheet').hidden = false;
+  document.getElementById('print').disabled = false;
+}
+
+const EKEY = 'adot-my-exam-v1';
+let EXAM = null;
+function setMsg(type, text){ document.getElementById('msgs').innerHTML = `<div class="${type}">${text}</div>`; }
+function setExam(d, fileName){
+  EXAM = d;
+  const m = d.meta || {}, n = d.items.length;
+  const undone = d.items.filter(i => !i.eval || i.eval.status !== 'done').length;
+  document.getElementById('examLine').innerHTML = `<b>${esc([m.school, m.grade, m.exam].filter(Boolean).join(' '))}</b> · ${n}문항 · ${undone ? '검수 전 ' + undone + '문항' : '검수 완료'}${fileName ? ' · ' + esc(fileName) : ''}`;
+  document.getElementById('openNote').disabled = false;
+}
+function parseExam(text){
+  let d;
+  if (/<html/i.test(text)) {
+    const el = new DOMParser().parseFromString(text, 'text/html').getElementById('data');
+    if (!el) throw new Error('심화분석지 파일이 아닙니다.');
+    d = JSON.parse(el.textContent);
+  } else d = JSON.parse(text);
+  if (!d.meta || !Array.isArray(d.items) || !d.items.length) throw new Error('심화분석지 데이터(meta, items)가 없습니다.');
+  return d;
+}
+/* 학생 데이터에 필요한 칸만 남겨 기억 (지문·해석은 빼서 가볍게) */
+function slim(d){
+  return { meta: d.meta, items: d.items.map(i => ({ no: i.no, points: i.points, answer: i.answer, type: i.type,
+    source: { cat: (i.source||{}).cat, detail: (i.source||{}).detail }, methods: i.methods || [], basis: i.basis || '',
+    eval: { difficulty: (i.eval||{}).difficulty, killer: !!(i.eval||{}).killer, status: (i.eval||{}).status } })) };
+}
+document.getElementById('loadExam').onclick = () => document.getElementById('examFile').click();
+document.getElementById('examFile').onchange = ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = slim(parseExam(String(r.result)));
+      setExam(d, f.name);
+      try { localStorage.setItem(EKEY, JSON.stringify({ d, name: f.name })); } catch(e) {}
+      setMsg('ok', '심화분석지를 불러왔습니다. 이제 학생 데이터를 붙여 넣으세요.');
+    } catch(e) { setMsg('err', '불러올 수 없습니다. ' + esc(e.message)); }
+  };
+  r.readAsText(f, 'utf-8');
+};
+document.getElementById('openNote').onclick = () => {
+  if (!EXAM) return;
+  const m = EXAM.meta || {};
+  const q = [...EXAM.items].map(i => String(i.no)).sort((a,b) => order(a) - order(b)).join(',');
+  const u = `note.html?school=${encodeURIComponent(m.school||'')}&grade=${encodeURIComponent(m.grade||'')}&exam=${encodeURIComponent(m.exam||'')}&q=${encodeURIComponent(q)}`;
+  window.open(u, '_blank', 'noopener');
+};
+function parseStudent(text){
+  const t = text.replace(/```(?:json)?/gi, '').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b < a) throw new Error('JSON을 찾을 수 없습니다.');
+  return JSON.parse(t.slice(a, b + 1));
+}
+function build(){
+  if (!EXAM) { setMsg('err', '먼저 1단계에서 심화분석지 파일을 불러오세요.'); return; }
+  let stu;
+  try { stu = parseStudent(document.getElementById('stuIn').value); }
+  catch(e) { setMsg('err', '학생 데이터를 읽을 수 없습니다. AI가 준 JSON 코드블록만 복사했는지 확인하세요.'); return; }
+  if (!Array.isArray(stu.items)) { setMsg('err', '학생 데이터에 items 목록이 없습니다. 오답노트 프롬프트로 다시 받으세요.'); return; }
+  render(EXAM, stu);
+}
+document.getElementById('build').onclick = build;
+document.getElementById('print').onclick = () => window.print();
+document.getElementById('sample').onclick = () => {
+  setExam(JSON.parse(document.getElementById('examData').textContent), '예시 데이터');
+  document.getElementById('stuIn').value = JSON.stringify(JSON.parse(document.getElementById('stuData').textContent), null, 1);
+  build();
+};
+try { const c = JSON.parse(localStorage.getItem(EKEY) || 'null'); if (c && c.d) setExam(c.d, c.name); } catch(e) {}
+</script>
+</body>
+</html>

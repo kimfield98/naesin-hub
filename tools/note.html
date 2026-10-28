@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내신 오답노트</title>
+<style>
+  :root{ --accent:#1E3A5F; --line:#C9D2DD; --ink:#1A1F2B; --sub:#4A5260; --faint:#7A8392; --soft:#EEF2F6; }
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:0}
+  html,body{margin:0;background:#E6E9EE}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);font-size:12.5px;line-height:1.5;word-break:keep-all}
+
+  /* 설정 패널 (화면 전용) */
+  .panel{max-width:794px;margin:24px auto 0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 22px}
+  .panel h2{margin:0 0 4px;font-size:16px;color:var(--accent)}
+  .panel p{margin:0 0 10px;color:var(--sub);font-size:12px}
+  .fields{display:grid;grid-template-columns:1fr 60px 1.4fr 74px 74px auto auto;gap:8px;align-items:end}
+  .fields label{font-size:11.5px;font-weight:700;color:var(--sub);display:flex;flex-direction:column;gap:3px}
+  .fields input{font:inherit;border:1px solid var(--line);border-radius:5px;padding:5px 7px}
+  .fields button{white-space:nowrap;font:inherit;font-weight:700;border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:6px 14px;cursor:pointer}
+  .fields button:focus-visible,.fields input:focus-visible{outline:3px solid #9BB4D3;outline-offset:1px}
+
+  /* A4 한 장 */
+  .sheet{width:794px;height:1122px;margin:24px auto;background:#fff;padding:38px 46px 30px;overflow:hidden;position:relative}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--accent);padding-bottom:6px}
+  .top h1{margin:0;font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .top .exam{font-size:13px;font-weight:700;color:var(--sub);text-align:right}
+  .top .exam small{display:block;font-size:10.5px;font-weight:400;color:var(--faint)}
+
+  .guide{margin:8px 0 0;padding:0;list-style:none;font-size:11.5px;color:var(--sub);display:grid;grid-template-columns:1fr 1fr;gap:1px 18px}
+  .guide b{color:var(--ink)}
+
+  h2.sec{display:flex;align-items:center;gap:8px;margin:14px 0 6px;font-size:13.5px;font-weight:800;color:var(--accent)}
+  h2.sec .tag{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:2px solid var(--accent);border-radius:50%;font-size:11.5px}
+  h2.sec small{font-size:11px;font-weight:400;color:var(--faint)}
+
+  /* 기본 정보 */
+  table.info{width:100%;border-collapse:collapse;font-size:12px}
+  table.info th{width:92px;white-space:nowrap;text-align:left;font-weight:700;color:var(--sub);padding:0 8px;border:1px solid var(--line);background:var(--soft);height:34px}
+  table.info td{border:1px solid var(--line);padding:0 8px}
+  table.info td.pt{text-align:right;color:var(--faint)}
+
+  /* 문항 결과 격자 */
+  .grid{display:grid;grid-template-columns:repeat(15,1fr);border-top:1.5px solid var(--ink);border-left:1.5px solid var(--ink)}
+  .grid div{border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);height:56px;position:relative}
+  .grid div span{position:absolute;top:2px;left:4px;font-size:11px;font-weight:700;color:var(--sub)}
+  .grid div.off{background:repeating-linear-gradient(135deg,#fff 0 5px,#E3E8EE 5px 6px)}
+  .grid div.off span{display:none}
+
+  /* 상세 기록 */
+  .legend{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0 0 6px;padding:5px 10px;border:1px solid var(--line);border-radius:5px;font-size:11.5px}
+  .legend b{color:var(--accent);margin-right:2px}
+  table.rec{width:100%;border-collapse:collapse;font-size:12px}
+  table.rec th{font-size:11.5px;font-weight:700;color:var(--accent);border-top:2px solid var(--accent);border-bottom:1px solid var(--accent);padding:4px 0}
+  table.rec td{border-bottom:1px solid var(--line);height:41px;text-align:center;vertical-align:middle}
+  table.rec td.no{width:66px;border-right:1px solid var(--line);text-align:right;padding-right:8px;color:var(--faint)}
+  table.rec td.mk{width:72px;border-right:1px solid var(--line);font-size:15px;font-weight:700;letter-spacing:10px;padding-left:10px;color:var(--sub)}
+  table.rec td.rs{width:210px;border-right:1px solid var(--line);font-size:14.5px;letter-spacing:5px;padding-left:5px;color:var(--sub)}
+  table.rec td.memo{text-align:left}
+
+  /* 확인 */
+  .check{display:grid;grid-template-columns:1fr 1fr 1.3fr;margin-top:12px;border:1.5px solid var(--ink)}
+  .check div{padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+  .check div + div{border-left:1px solid var(--line)}
+  .check b{color:var(--accent)}
+  .foot{position:absolute;left:46px;right:46px;bottom:14px;display:flex;justify-content:space-between;font-size:10px;color:var(--faint)}
+
+  @media print{
+    html,body{background:#fff}
+    .panel{display:none}
+    .sheet{margin:0;box-shadow:none}
+  }
+</style>
+</head>
+<body>
+
+<section class="panel" aria-label="입력지 설정">
+  <h2>내신 오답노트</h2>
+  <p>My 내신분석에서 열면 시험 정보와 문항 번호가 자동으로 채워집니다. 직접 쓸 때는 시험 정보와 객관식·서답형 문항 수를 넣고 [반영]을 누르세요.</p>
+  <div class="fields">
+    <label>학교<input id="fSchool" value="대성고"></label>
+    <label>학년<input id="fGrade" value="고1"></label>
+    <label>시험<input id="fExam" value="2026년 2학기 중간고사"></label>
+    <label>객관식<input id="fCount" type="number" min="0" max="45" value="30"></label>
+    <label>서답형<input id="fSub" type="number" min="0" max="15" value="0"></label>
+    <button type="button" id="apply">반영</button>
+    <button type="button" id="printBtn">인쇄</button>
+  </div>
+</section>
+
+<main class="sheet">
+  <header class="top">
+    <h1>내신 오답노트</h1>
+    <div class="exam"><span id="examTitle"></span><small>에이닷 영어학원 세종아름지점</small></div>
+  </header>
+
+  <ul class="guide">
+    <li>· 틀린 문제는 <b>X</b>, 맞았지만 헷갈린 문제는 <b>△</b></li>
+    <li>· 맞은 문제 칸은 비워 두기</li>
+    <li>· X와 △ 문항은 모두 상세 기록에 한 줄씩</li>
+    <li>· 숫자는 또박또박, 고칠 때는 두 줄 긋고 옆에</li>
+  </ul>
+
+  <h2 class="sec"><span class="tag">1</span>기본 정보</h2>
+  <table class="info">
+    <tr><th>이름</th><td></td><th>담당 선생님</th><td></td></tr>
+    <tr><th>이번 점수</th><td class="pt">점</td><th>이전 점수</th><td class="pt">점</td></tr>
+    <tr><th>목표 점수</th><td class="pt">점</td><th>작성일</th><td class="pt">월 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일</td></tr>
+  </table>
+
+  <h2 class="sec"><span class="tag">2</span>문항별 결과<small>틀림 X · 헷갈림 △ · 맞음은 빈칸</small></h2>
+  <div class="grid" id="grid"></div>
+
+  <h2 class="sec"><span class="tag">3</span>상세 기록<small>X·△ 문항만, 번호 순서대로</small></h2>
+  <div class="legend">
+    <span><b>①</b>단어 모름</span><span><b>②</b>구문 해석</span><span><b>③</b>근거 못 찾음</span><span><b>④</b>선지 함정</span>
+    <span><b>⑤</b>변형 못 알아봄</span><span><b>⑥</b>시간 부족</span><span><b>⑦</b>실수</span>
+  </div>
+  <table class="rec">
+    <thead><tr><th>번호</th><th>구분</th><th>틀린 이유 (해당 번호에 모두 동그라미)</th><th>메모 (왜 틀렸는지 한 줄)</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="check">
+    <div><span>틀린 문항 X</span><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;개</b></div>
+    <div><span>헷갈린 문항 △</span><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;개</b></div>
+    <div><span>칸이 부족하면 뒷면에 같은 형식으로</span></div>
+  </div>
+
+  <footer class="foot"><span>내신 오답노트 v1</span><span id="footExam"></span></footer>
+</main>
+
+<script>
+const ROWS = 12;
+const $ = id => document.getElementById(id);
+/* 주소로 받은 시험 정보 채우기: note.html?school=..&grade=..&exam=..&q=1,2,…,서답1 */
+const P = new URLSearchParams(location.search);
+let LABELS = null;
+if (P.get('school') !== null) $('fSchool').value = P.get('school');
+if (P.get('grade') !== null) $('fGrade').value = P.get('grade');
+if (P.get('exam') !== null) $('fExam').value = P.get('exam');
+if (P.get('q')) {
+  LABELS = P.get('q').split(',').map(s => s.trim()).filter(Boolean);
+  $('fCount').value = LABELS.filter(l => !/^서답/.test(l)).length;
+  $('fSub').value = LABELS.filter(l => /^서답/.test(l)).length;
+}
+function labels(){
+  if (LABELS) return LABELS;
+  const n = Math.max(0, Math.min(45, parseInt($('fCount').value, 10) || 0));
+  const m = Math.max(0, Math.min(15, parseInt($('fSub').value, 10) || 0));
+  return [...Array(n)].map((_, i) => String(i + 1)).concat([...Array(m)].map((_, i) => '서답' + (i + 1)));
+}
+function render(){
+  const school = $('fSchool').value.trim(), grade = $('fGrade').value.trim(), exam = $('fExam').value.trim();
+  const L = labels();
+  const obj = L.filter(l => !/^서답/.test(l)).length, sub = L.length - obj;
+  const title = [school, grade, exam].filter(Boolean).join(' ');
+  $('examTitle').textContent = title;
+  $('footExam').textContent = `${title} · 객관식 ${obj}${sub ? ' · 서답형 ' + sub : ''}`;
+  document.title = `내신오답노트_${school}_${grade}_${exam}`;
+  const cells = Math.max(15, Math.ceil(L.length / 15) * 15);
+  let g = '';
+  for (let i = 0; i < cells; i++) g += i < L.length ? `<div><span>${L[i].replace('서답', '서')}</span></div>` : '<div class="off"></div>';
+  $('grid').innerHTML = g;
+  let r = '';
+  for (let i = 0; i < ROWS; i++) r += '<tr><td class="no">번</td><td class="mk">X△</td><td class="rs">①②③④⑤⑥⑦</td><td class="memo"></td></tr>';
+  $('rows').innerHTML = r;
+}
+$('apply').addEventListener('click', () => { LABELS = null; render(); });
+$('printBtn').addEventListener('click', () => window.print());
+render();
+</script>
+</body>
+</html>

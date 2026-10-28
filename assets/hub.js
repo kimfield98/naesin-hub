@@ -8,8 +8,8 @@
     .replace(/\*\*(.+?)\*\*/g, '<mark>$1</mark>')
     .replace(/`([^`]+)`/g, '<code class="file">$1</code>')
     .replace(/\[([^\[\]]+)\]/g, '<span class="btn">$1</span>');
-  const TABS = ['guide','simhwa','trend','prompt'];
-  const TOOL_NAME = {simhwa:'심화분석지', trend:'경향분석지'};
+  const TABS = ['guide','simhwa','trend','prompt','my'];
+  const TOOL_NAME = {simhwa:'심화분석지', trend:'경향분석지', my:'My 내신분석'};
 
   /* ── 이 브라우저에만 남는 진행 체크 ── */
   const SKEY = 'adot-hub-v1';
@@ -37,6 +37,9 @@
   $$('[data-open]').forEach(a => a.href = toolUrl(a.dataset.open));
   $$('[data-dl]').forEach(a => { const k = a.dataset.dl; a.href = V[k].file; a.download = `${k==='simhwa'?'내신심화분석지':'내신경향분석지'}_템플릿_v${V[k].ver}.html`; });
   $('#dlPrompt').href = V.prompt.file; $('#dlPrompt').download = V.prompt.file.split('/').pop();
+  /* My 내신분석(실험 중): 오답노트 프롬프트 */
+  $('#dlNotePrompt').href = V.notePrompt.file; $('#dlNotePrompt').download = V.notePrompt.file.split('/').pop();
+  $('#copyNotePrompt').onclick = ev => copy(H.notePrompt, ev.currentTarget, '복사됨 ✓');
 
   /* ── 안내: 단계 ── */
   const role = () => H.roles[S.role];
@@ -119,7 +122,7 @@
       $$('.tabs a').forEach(a => { if(a.dataset.tab===t) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
       if(TOOL_NAME[t]) loadFrame(t); else closeDrawer();
       if(drawerFor && drawerFor!==t) openDrawer(t);
-      document.title = (t==='guide' ? '' : ({simhwa:'심화분석지',trend:'경향분석지',prompt:'프롬프트'})[t] + ' · ') + '에이닷 내신 분석실';
+      document.title = (t==='guide' ? '' : ({simhwa:'심화분석지',trend:'경향분석지',prompt:'프롬프트',my:'My 내신분석'})[t] + ' · ') + '에이닷 내신 분석실';
       cur = t; window.scrollTo(0,0);
     }
   }
