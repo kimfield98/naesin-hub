@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.10
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.11
+  (v3.11 · 2026.10.29: 화면 배치 변경 — 위쪽 도구 줄을 얇게, 검수 패널을 오른쪽 칸에 고정, [고치기]·[원문 고치기]도 오른쪽 칸에서 열려 카드와 나란히 비교하며 수정)
   (v3.10 · 2026.10.29: 순서·삽입의 '주어진 문장(글)'에도 형광펜 표시(변형률 계산은 그대로 지문만), 강사가 영어 지문에서 글자를 골라 형광펜 추가·삭제, 교과서 본문 외 지문은 '교과서 · ○과 본문외'로 표기)
   (v3.9 · 2026.10.28: 출처 분류를 교과서·모의고사·부교재·유인물·쌩외부지문·미확인으로 변경(예전 '외부지문'은 '쌩외부지문'으로 자동 변환), 부교재 이름 표기(수능특강라이트 등), 특이사항은 답 근거와 별개로 난이도 근거·문제 특징)
   (v3.8 · 2026.10.28: 글꼴·크기·자간·행간 통일(한글은 모두 본문 고딕, 영어는 Times 계열), 표지의 표시 설명(형광펜·밑줄·근거·변형률) 삭제, 특이사항에 AI 초안(note) 표시)
@@ -117,14 +118,15 @@
   button:focus-visible,.memo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* 화면 전용 도구 */
-  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px}
+  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:10px;padding:6px 16px;font-size:13px}
   .toolbar .p{margin-right:auto}
   .toolbar button{font:inherit;font-size:13px;border:1px solid #fff;background:transparent;color:#fff;border-radius:5px;padding:4px 12px;cursor:pointer}
   .toolbar button.main{background:#fff;color:var(--accent);font-weight:700}
 
   @media print{
     html,body{background:#fff}
-    .toolbar,.status,.notice,.panel,.dlg,.scr{display:none!important}
+    .toolbar,.status,.notice,.panel,.dlg,.scr,.side{display:none!important}
+    .mainwrap{margin-right:0!important}
     .sheet{width:auto;margin:0;padding:0 13mm}
     .seg button:not(.on),.tag:not(.on){display:none}
     .seg button.on,.tag.on{cursor:default}
@@ -287,6 +289,26 @@
   #hlTool button.x{background:#fff}
   @media print{ #hlTool{display:none!important} }
 
+  /* ───────── v3.11 오른쪽 칸: 검수 패널 + 고치기 (화면 전용) ───────── */
+  :root{ --sideW:420px; --tbH:41px; }
+  .side{position:fixed;top:var(--tbH);right:0;bottom:0;width:var(--sideW);background:#F4F6F9;border-left:1px solid var(--line);overflow-y:auto;z-index:4;padding:14px 14px 40px}
+  body:not(.side-on) .side{display:none}
+  body.side-on .mainwrap{margin-right:var(--sideW)}
+  .side .panel{width:auto;margin:0;padding:12px 14px}
+  .side .panel .cols{grid-template-columns:1fr;gap:14px}
+  .side.editing .panel{display:none}
+  .side .eform{margin:0;background:#fff}
+  .side .eform .eh b{flex:1;white-space:nowrap;font-size:13.5px;color:var(--accent)}
+  .side .eform .eguide{margin:0;font-size:11.5px;line-height:1.5;color:var(--faint)}
+  .side .eform .er,.side .eform .er.noans{grid-template-columns:1fr 1fr}
+  .side .eform .er2{grid-template-columns:1fr}
+  .card.editing,.q.editing{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+  .toolbar #btnSide{border-style:dashed}
+  .toolbar button,.toolbar .pko{white-space:nowrap;flex:none}
+  .toolbar .p{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:1260px){ body.side-on .mainwrap{margin-right:0} .side{box-shadow:-8px 0 20px rgba(20,30,45,.18)} }
+  @media (max-width:860px){ :root{ --sideW:100vw; } }
+
   /* ───────── v3.8 타이포그래피 통일 (위 규칙보다 우선) ─────────
      한글: 본문 고딕 한 가지(--f-ko) · 영어 지문/선지: Times 계열(--f-en, 한글이 섞이면 자동으로 본문 고딕)
      크기: 11 라벨 · 12 보조(해석·표) · 13 한글 본문 · 13.5 강조(발문·문항 정보) · 14.5 영어 본문
@@ -331,10 +353,11 @@
   <button type="button" id="btnSave">저장</button>
   <label class="pko"><input type="checkbox" id="ckKo"> 인쇄에 해석 포함</label>
   <button type="button" class="main" id="btnPrint">인쇄</button>
+  <button type="button" id="btnSide">검수 패널 닫기</button>
 </div>
-<div class="panel" id="panel"></div>
+<aside class="side" id="side"><div id="sideEdit"></div><div class="panel" id="panel"></div></aside>
 
-<div class="sheet"><div id="app"></div></div>
+<div class="mainwrap"><div class="sheet"><div id="app"></div></div></div>
 
 <div class="dlg" id="dlg"><div class="in">
   <b>AI가 준 JSON을 그대로 붙여 넣으세요</b>
@@ -474,12 +497,13 @@
     if(E.length===K.length) return wrap(para + `<table class="pair withko"><tbody>${E.map((l,k)=>`<tr><td class="en">${mark(l)}</td><td class="ko">${mark(K[k])}</td></tr>`).join('')}</tbody></table>`);
     return wrap(para + `<table class="pair split withko"><tbody><tr><td class="en">${E.map(mark).join('\n')}</td><td class="ko">${K.map(mark).join('\n')}</td></tr></tbody></table>`);
   }
-  function origBlock(orig, exam, target){
+  function origBlock(orig, exam, target, alt){
     if(!orig) return '';
     const fixed = (D.meta.fixes||[]).filter(f=>f.target===target && (f.fields||['original']).includes('original'));
     const a = analyze(exam, orig); let html = esc(orig);
     if(a){ let s='', pos=0; a.to.forEach((t,k)=>{ s += esc(orig.slice(pos,t.a)) + (a.used[k] ? esc(orig.slice(t.a,t.b)) : `<span class="del">${esc(orig.slice(t.a,t.b))}</span>`); pos=t.b; }); html = s + esc(orig.slice(pos)); }
-    return `<details class="orig"><summary>원문 보기 · 출처 확인용(인쇄 안 됨) · 시험에 안 쓰인 부분은 회색${fixed.length?` · <span class="fixed">원문 수정됨 ${fixed.length}회</span>`:''}</summary>
+    const op = editing && (editing===target || editing===alt) ? ' open' : '';
+    return `<details class="orig"${op}><summary>원문 보기 · 출처 확인용(인쇄 안 됨) · 시험에 안 쓰인 부분은 회색${fixed.length?` · <span class="fixed">원문 수정됨 ${fixed.length}회</span>`:''}</summary>
       <div class="t">${html.replace(/\n/g,'<br>')}</div><div class="obar"><span>AI가 원문을 잘못 옮겼으면 (예: its → his)</span><button type="button" data-eact="edit" data-t="${esc(target)}">원문 고치기</button></div></details>`;
   }
 
@@ -579,12 +603,11 @@
       </div>`;
     }
     const tag = inGroup ? 'div' : 'article';
-    if(editing===tgt) return `<${tag} class="${inGroup?'q':'card'} editing">${head}${editForm(tgt)}</${tag}>`;
     const ansbar = longAns(it.answer) ? `<div class="ansbar"><span class="k">정답${isSubj(it.no)?' (모범답안)':''}</span><span class="en">${esc(it.answer)}</span></div>` : '';
-    return `<${tag} class="${inGroup?'q':'card'}" id="q-${esc(it.no)}">${head}
+    return `<${tag} class="${inGroup?'q':'card'}${editing===tgt?' editing':''}" id="q-${esc(it.no)}">${head}
       ${ansbar}${afix}${acheck}
       <p class="stem">${esc(it.stem)}</p>
-      ${own}${box}${choices}${basis}${methods}${it.passage?origBlock(orig, it.passage, it.original?'i:'+it.no:'g:'+it.group):''}${evalBox}
+      ${own}${box}${choices}${basis}${methods}${it.passage?origBlock(orig, it.passage, it.original?'i:'+it.no:'g:'+it.group, tgt):''}${evalBox}
     </${tag}>`;
   }
 
@@ -595,10 +618,10 @@
       if(it.group){
         const g = groups[it.group]||{}, idx=[];
         while(i<items.length && items[i].group===it.group){ idx.push(i); i++; } i--;
-        out.push(`<article class="card group">
+        out.push(`<article class="card group${editing==='g:'+it.group?' editing':''}">
           <div class="gbar"><b>[${esc(it.group)}]</b><span>지문 공유 · ${idx.map(k=>esc(qLabel(items[k].no))).join(', ')}</span><button type="button" class="ebtn" data-eact="edit" data-t="${esc('g:'+it.group)}">공유 지문 고치기</button></div>
-          ${editing==='g:'+it.group ? editForm('g:'+it.group) : `<p class="stem">${esc(g.stem||'')}</p>
-          ${g.passage?`<div class="shared">${pairTable(g.passage, g.passageKo, g.original, 'g:'+it.group+':passage', (g.hl||{}).passage)}</div>${origBlock(g.original, g.passage, 'g:'+it.group)}`:'<div class="pending">공유 지문 데이터 없음</div>'}`}
+          <p class="stem">${esc(g.stem||'')}</p>
+          ${g.passage?`<div class="shared">${pairTable(g.passage, g.passageKo, g.original, 'g:'+it.group+':passage', (g.hl||{}).passage)}</div>${origBlock(g.original, g.passage, 'g:'+it.group)}`:'<div class="pending">공유 지문 데이터 없음</div>'}
           ${idx.map(k=>qblock(items[k],k,true)).join('')}
         </article>`);
       } else out.push(qblock(it,i,false));
@@ -653,7 +676,7 @@
     if(fx.length) T.push(['info', `직접 고친 곳 ${fx.length}곳: ${fx.map(t=>t.startsWith('g:')?'['+t.slice(2)+'] 공유 지문':qLabel(t.slice(2))).join(', ')}`]);
     const hlN = items.reduce((n,i)=>n+Object.values(i.hl||{}).reduce((a,l)=>a+l.length,0),0) + Object.values(groups).reduce((n,g)=>n+Object.values(g.hl||{}).reduce((a,l)=>a+l.length,0),0);
     if(hlN) T.push(['info', `강사가 추가한 형광펜 ${hlN}곳 (변형률 숫자에는 반영되지 않음)`]);
-    if(editing) T.unshift(['bad','고치는 중인 카드가 있습니다 → [저장] 또는 [취소]']);
+    if(editing) T.unshift(['bad','고치는 중인 카드가 있습니다 → 오른쪽 칸에서 [적용] 또는 [닫기]']);
     if(!T.filter(x=>x[0]!=='info').length) T.push(['ok','검수 항목 이상 없음']);
 
     const icon = {ok:'✓',bad:'✕',warn:'!',info:'·'};
@@ -678,9 +701,13 @@
     const withCard = items.filter(it => it.stem);
     const done = withCard.filter(it => it.eval && it.eval.status==='done').length;
     const bad = panel();
+    $('side').classList.toggle('editing', !!editing);
+    if(!editing){ $('sideEdit').innerHTML = ''; sideFor = null; }
+    else if(sideFor!==editing){ $('sideEdit').innerHTML = editForm(editing); sideFor = editing; $('side').scrollTop = 0; }
     document.title = m.school ? `${m.school} ${m.grade} ${m.exam} 심화분석` : '내신 심화분석';
     $('progress').textContent = !items.length ? '데이터를 붙여 넣어 시작하세요' :
-      `문항 ${withCard.length}개 · 데이터 확인 남음 ${bad.a} · 검수 남음 ${bad.t} · 검수 완료 ${done}/${withCard.length}`;
+      `문항 ${withCard.length} · 데이터 ✕ ${bad.a} · 검수 ✕ ${bad.t} · 검수 완료 ${done}/${withCard.length}`;
+    $('progress').title = items.length ? `문항 ${withCard.length}개 · 데이터 확인 남음 ${bad.a} · 검수 남음 ${bad.t} · 검수 완료 ${done}/${withCard.length}` : '';
     document.body.classList.toggle('noko', !m.printKo); $('ckKo').checked = !!m.printKo;
     if(!items.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[데이터 붙여넣기]를 눌러 AI가 준 JSON을 넣어 주세요.</div>`; return; }
     app.innerHTML = `
@@ -745,8 +772,11 @@
     }
     if(isG || o.original || !o.group) h += fld('원문 (원문 PDF와 한 글자씩 대조)', ta('original',o.original,'',6), true);
     else h += `<p class="enote">이 문항의 원문은 [${esc(o.group)}] 공유 지문의 [고치기]에서 고칩니다.</p>`;
-    return `<div class="eform" data-t="${esc(target)}"><div class="eh"><b>고치기</b><span>[[밑줄]], **근거** 표시는 그대로 두세요 · 정답 칸은 학교 정답표를 잘못 옮겼을 때만 고칩니다 (정답표 자체의 오류는 카드의 [정답 정정])</span>
-      <button type="button" data-eact="cancel">취소</button><button type="button" class="main" data-eact="save">저장</button></div>${h}</div>`;
+    const name = isG ? `[${esc(key)}] 공유 지문` : esc(qTag(key));
+    return `<div class="eform" data-t="${esc(target)}"><div class="eh"><b>고치기 · ${name}</b>
+      <button type="button" data-eact="cancel">닫기</button><button type="button" class="main" data-eact="save">적용</button></div>
+      <p class="eguide">왼쪽 카드와 비교하며 고치세요. [적용]하면 카드에 바로 반영되고 이 칸은 열려 있습니다 · [[밑줄]], **근거** 표시는 그대로 두세요 · 정답 칸은 학교 정답표를 잘못 옮겼을 때만 고칩니다 (정답표 자체의 오류는 카드의 [정답 정정])</p>${h}
+      <div class="eh" style="justify-content:flex-end"><button type="button" data-eact="cancel">닫기</button><button type="button" class="main" data-eact="save">적용</button></div></div>`;
   }
   function saveForm(form){
     const target = form.dataset.t, isG = target.startsWith('g:'), key = target.slice(2);
@@ -771,14 +801,33 @@
     if(changed.length){ D.meta.fixes = D.meta.fixes||[];
       D.meta.fixes.push({target, fields:changed, at:new Date().toISOString(), by: D.meta.reviewer||'강사'}); dirty = true; }
   }
-  app.addEventListener('click', ev => {
+  /* v3.11: 고치기는 오른쪽 칸에서. [적용] = 카드에 반영하고 계속 열어 둠, [닫기] = 검수 패널로 */
+  let formDirty = false, sideFor = null;
+  const onEdit = ev => {
     const b = ev.target.closest('button[data-eact]'); if(!b) return;
     const act = b.dataset.eact, y = window.scrollY;
-    if(act==='edit'){ if(editing && !confirm('고치던 카드가 있습니다. 저장하지 않고 다른 카드를 열까요?')) return; editing = b.dataset.t; }
-    if(act==='save') saveForm(b.closest('.eform'));
-    if(act==='save' || act==='cancel') editing = null;
+    if(act==='edit'){ if(editing===b.dataset.t){ setSide(true); return; }
+      if(editing && formDirty && !confirm('적용하지 않은 고친 내용이 있습니다. 버리고 다른 카드를 열까요?')) return;
+      editing = b.dataset.t; formDirty = false; sideFor = null; setSide(true); }
+    if(act==='save'){ saveForm(b.closest('.eform')); formDirty = false; sideFor = null; }
+    if(act==='cancel'){ if(formDirty && !confirm('적용하지 않은 고친 내용이 있습니다. 버리고 닫을까요?')) return; editing = null; formDirty = false; sideFor = null; }
     render(); window.scrollTo(0,y);
-  });
+  };
+  app.addEventListener('click', onEdit);
+  $('side').addEventListener('click', onEdit);
+  $('side').addEventListener('input', ev => { if(ev.target.closest('.eform')) formDirty = true; });
+  $('side').addEventListener('change', ev => { if(ev.target.closest('.eform')) formDirty = true; });
+  /* 오른쪽 칸 열기·닫기 (넓은 화면은 기본으로 열림) */
+  const SKEY = 'adot-simhwa-side';
+  function setSide(on, remember){ document.body.classList.toggle('side-on', on); $('btnSide').textContent = on ? '검수 패널 닫기' : '검수 패널 열기';
+    if(remember){ try{ localStorage.setItem(SKEY, on?'1':'0'); }catch(e){} } }
+  $('btnSide').onclick = () => { const on = !document.body.classList.contains('side-on');
+    if(!on && editing && formDirty && !confirm('적용하지 않은 고친 내용이 있습니다. 칸을 닫을까요? (고치던 내용은 남아 있습니다)')) return;
+    setSide(on, true); };
+  const tbH = () => document.documentElement.style.setProperty('--tbH', document.querySelector('.toolbar').offsetHeight+'px');
+  window.addEventListener('resize', tbH);
+  (()=>{ let pref = null; try{ pref = localStorage.getItem(SKEY); }catch(e){}
+    setSide(pref==null ? window.innerWidth>=1260 : pref==='1'); tbH(); })();
   app.addEventListener('focusout', ev => {
     const act = ev.target.dataset && ev.target.dataset.act; if(act!=='memo' && act!=='reason' && act!=='note') return;
     const e = D.items[+ev.target.closest('.eval').dataset.i].eval, t = ev.target.innerText.trim();
@@ -872,7 +921,8 @@
     const a = document.activeElement; if(a && a.blur) a.blur();
     D.meta.savedAt = new Date().toISOString();
     const clone = document.documentElement.cloneNode(true);
-    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = '';
+    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = ''; clone.querySelector('#sideEdit').innerHTML = '';
+    clone.querySelector('body').classList.remove('side-on'); clone.querySelector('#side').classList.remove('editing');
     clone.querySelector('#dlg').classList.remove('on');
     clone.querySelector('#data').textContent = '\n' + JSON.stringify(D, null, 1).replace(/<\//g,'<\\/') + '\n';
     const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html'});
