@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.11
+  에이닷 영어학원 세종아름지점 · 내신 심화분석지 템플릿 v3.12
+  (v3.12 · 2026.10.29: 오른쪽 칸 폭 420→380px — 안내 사이트 왼쪽 메뉴를 접은 노트북 화면(1280px)에서도 시험지와 나란히 보이도록)
   (v3.11 · 2026.10.29: 화면 배치 변경 — 위쪽 도구 줄을 얇게, 검수 패널을 오른쪽 칸에 고정, [고치기]·[원문 고치기]도 오른쪽 칸에서 열려 카드와 나란히 비교하며 수정)
   (v3.10 · 2026.10.29: 순서·삽입의 '주어진 문장(글)'에도 형광펜 표시(변형률 계산은 그대로 지문만), 강사가 영어 지문에서 글자를 골라 형광펜 추가·삭제, 교과서 본문 외 지문은 '교과서 · ○과 본문외'로 표기)
   (v3.9 · 2026.10.28: 출처 분류를 교과서·모의고사·부교재·유인물·쌩외부지문·미확인으로 변경(예전 '외부지문'은 '쌩외부지문'으로 자동 변환), 부교재 이름 표기(수능특강라이트 등), 특이사항은 답 근거와 별개로 난이도 근거·문제 특징)
@@ -290,12 +291,13 @@
   @media print{ #hlTool{display:none!important} }
 
   /* ───────── v3.11 오른쪽 칸: 검수 패널 + 고치기 (화면 전용) ───────── */
-  :root{ --sideW:420px; --tbH:41px; }
+  :root{ --sideW:380px; --tbH:41px; }
   .side{position:fixed;top:var(--tbH);right:0;bottom:0;width:var(--sideW);background:#F4F6F9;border-left:1px solid var(--line);overflow-y:auto;z-index:4;padding:14px 14px 40px}
   body:not(.side-on) .side{display:none}
   body.side-on .mainwrap{margin-right:var(--sideW)}
   .side .panel{width:auto;margin:0;padding:12px 14px}
   .side .panel .cols{grid-template-columns:1fr;gap:14px}
+  .side .panel h3{flex-wrap:wrap;row-gap:0} .side .panel h3 small{flex-basis:100%}
   .side.editing .panel{display:none}
   .side .eform{margin:0;background:#fff}
   .side .eform .eh b{flex:1;white-space:nowrap;font-size:13.5px;color:var(--accent)}
@@ -306,7 +308,7 @@
   .toolbar #btnSide{border-style:dashed}
   .toolbar button,.toolbar .pko{white-space:nowrap;flex:none}
   .toolbar .p{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  @media (max-width:1260px){ body.side-on .mainwrap{margin-right:0} .side{box-shadow:-8px 0 20px rgba(20,30,45,.18)} }
+  @media (max-width:1200px){ body.side-on .mainwrap{margin-right:0} .side{box-shadow:-8px 0 20px rgba(20,30,45,.18)} }
   @media (max-width:860px){ :root{ --sideW:100vw; } }
 
   /* ───────── v3.8 타이포그래피 통일 (위 규칙보다 우선) ─────────
@@ -827,7 +829,10 @@
   const tbH = () => document.documentElement.style.setProperty('--tbH', document.querySelector('.toolbar').offsetHeight+'px');
   window.addEventListener('resize', tbH);
   (()=>{ let pref = null; try{ pref = localStorage.getItem(SKEY); }catch(e){}
-    setSide(pref==null ? window.innerWidth>=1260 : pref==='1'); tbH(); })();
+    setSide(pref==null ? window.innerWidth>=1200 : pref==='1'); tbH();
+    /* 직접 열고 닫은 적이 없으면 창 폭이 바뀔 때 다시 판단 (고치는 중에는 열어 둠) */
+    if(pref==null) window.addEventListener('resize', () => { let p2 = null; try{ p2 = localStorage.getItem(SKEY); }catch(e){}
+      if(p2==null && !editing) setSide(window.innerWidth>=1200); }); })();
   app.addEventListener('focusout', ev => {
     const act = ev.target.dataset && ev.target.dataset.act; if(act!=='memo' && act!=='reason' && act!=='note') return;
     const e = D.items[+ev.target.closest('.eval').dataset.i].eval, t = ev.target.innerText.trim();

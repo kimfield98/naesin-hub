@@ -34,8 +34,6 @@
   $('#verPill').textContent = `${V.label} · ${V.date}`;
   $$('[data-ver]').forEach(el => el.textContent = 'v' + V[el.dataset.ver].ver);
   const toolUrl = k => `${V[k].file}?v=${encodeURIComponent(V[k].ver)}`;
-  $$('[data-open]').forEach(a => a.href = toolUrl(a.dataset.open));
-  $$('[data-dl]').forEach(a => { const k = a.dataset.dl; a.href = V[k].file; a.download = `${k==='simhwa'?'내신심화분석지':'내신경향분석지'}_템플릿_v${V[k].ver}.html`; });
   $('#dlPrompt').href = V.prompt.file; $('#dlPrompt').download = V.prompt.file.split('/').pop();
 
   /* ── 안내: 단계 ── */
@@ -122,9 +120,9 @@
         <ul>${st.body.map(b=>`<li>${fmt(b)}</li>`).join('')}</ul></div>`; }).join('') + `<p class="dempty">자세한 설명과 '막히면'은 <a href="#guide">안내</a> 탭에 있습니다.</p>`
       : `<p class="dempty">이 화면에서 할 단계가 없습니다.</p>`;
   }
-  function openDrawer(k){ drawerFor = k; $('#drawer').hidden = false; document.body.classList.add('dr-open'); renderDrawer(); }
-  function closeDrawer(){ drawerFor = null; $('#drawer').hidden = true; document.body.classList.remove('dr-open'); }
-  $$('[data-drawer]').forEach(b => b.onclick = () => drawerFor===b.dataset.drawer ? closeDrawer() : openDrawer(b.dataset.drawer));
+  function openDrawer(k){ drawerFor = k; $('#drawer').hidden = false; document.body.classList.add('dr-open'); $('#ntDrawer').setAttribute('aria-pressed','true'); renderDrawer(); }
+  function closeDrawer(){ drawerFor = null; $('#drawer').hidden = true; document.body.classList.remove('dr-open'); $('#ntDrawer').setAttribute('aria-pressed','false'); }
+  $('#ntDrawer').onclick = () => drawerFor===cur ? closeDrawer() : openDrawer(cur);
   $('#drClose').onclick = closeDrawer;
   document.addEventListener('keydown', ev => { if(ev.key==='Escape' && drawerFor) closeDrawer(); });
 
@@ -135,6 +133,7 @@
     if(t!==cur){
       TABS.forEach(k => $(`#view-${k}`).hidden = k!==t);
       $$('.tabs a').forEach(a => { if(a.dataset.tab===t) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+      setNavTool(t); applyNav(t);
       if(TOOL_NAME[t]) loadFrame(t); else closeDrawer();
       if(drawerFor && drawerFor!==t) openDrawer(t);
       document.title = (t==='guide' ? '' : ({simhwa:'심화분석지',trend:'경향분석지',prompt:'프롬프트',qna:'Q&A'})[t] + ' · ') + '에이닷 내신 분석실';
@@ -151,8 +150,34 @@
     catch(e){ toast('템플릿 위쪽의 [인쇄] 버튼을 눌러 주세요.'); }
   });
 
-  /* 상단 메뉴 높이 → 작업 공간 높이 */
-  const setH = () => document.documentElement.style.setProperty('--hdr', $('#hdr').offsetHeight + 'px');
+  /* v3.14 왼쪽 메뉴: 분석지 탭이면 그 분석지의 순서·버튼을 메뉴 안에 표시 */
+  const TOOL_FLOW = {
+    simhwa: ['데이터 붙여넣기','① 데이터 확인','② 검수','문항 평가','저장 · 인쇄'],
+    trend:  ['심화분석지 불러오기','등급컷 · 총평','저장 · 인쇄']
+  };
+  function setNavTool(t){
+    const on = !!TOOL_NAME[t]; $('#navTool').hidden = !on; if(!on) return;
+    $('#ntName').textContent = TOOL_NAME[t]; $('#ntVer').textContent = 'v' + V[t].ver;
+    $('#ntFlow').innerHTML = TOOL_FLOW[t].map(x=>`<li>${esc(x)}</li>`).join('');
+    $('#ntOpen').href = toolUrl(t);
+    $('#ntDl').href = V[t].file; $('#ntDl').download = `${t==='simhwa'?'내신심화분석지':'내신경향분석지'}_템플릿_v${V[t].ver}.html`;
+    $('#ntDrawer').setAttribute('aria-pressed', String(drawerFor===t));
+  }
+  /* 메뉴 접기: 읽는 탭·분석지 탭을 따로 기억. 정한 적 없으면 분석지 탭은 화면이 좁을 때(1500px 미만) 접힘 */
+  const NKEY = 'adot-hub-nav';
+  let NP = {}; try{ NP = JSON.parse(localStorage.getItem(NKEY)||'{}')||{}; }catch(e){}
+  const kind = t => TOOL_NAME[t] ? 'tool' : 'read';
+  function applyNav(t){
+    const k = kind(t), pref = NP[k];
+    const mini = pref ? pref==='mini' : (k==='tool' && window.innerWidth < 1500);
+    document.body.classList.toggle('nav-mini', mini);
+    const lab = mini ? '메뉴 펼치기' : '메뉴 접기'; $('#navFold').setAttribute('aria-label', lab); $('#navFold').title = lab;
+  }
+  $('#navFold').onclick = () => { const mini = !document.body.classList.contains('nav-mini');
+    NP[kind(cur)] = mini ? 'mini' : 'full'; try{ localStorage.setItem(NKEY, JSON.stringify(NP)); }catch(e){} applyNav(cur); };
+
+  /* 휴대폰에서는 메뉴가 위쪽 가로 줄 → 그 높이만큼 작업 공간을 줄임 */
+  const setH = () => document.documentElement.style.setProperty('--hdr', (window.innerWidth<=760 ? $('#nav').offsetHeight : 0) + 'px');
   window.addEventListener('resize', setH); setH();
 
   renderGuide();

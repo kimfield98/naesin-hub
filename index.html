@@ -4,6 +4,7 @@
   - 안내 문구·버전·프롬프트: assets/content.js
   - 템플릿 파일: tools/simhwa.html, tools/trend.html (교체 후 content.js의 버전 숫자도 올림)
   - 화면 구조: 이 파일 / 디자인: assets/hub.css / 동작: assets/hub.js
+  - v3.14: 위쪽 메뉴 → 왼쪽 메뉴(접기 가능), 분석지 탭의 버튼도 왼쪽 메뉴로
 -->
 <html lang="ko">
 <head>
@@ -17,24 +18,33 @@
 </head>
 <body>
 
-<header class="hdr" id="hdr">
-  <div class="hdr-in">
-    <a class="brand" href="#guide" aria-label="안내로 가기">
-      <span class="mark" aria-hidden="true">A</span>
-      <span class="bt"><b>에이닷 내신 분석실</b><small>세종아름지점</small></span>
-    </a>
-    <nav class="tabs" aria-label="메뉴">
-      <a href="#guide" data-tab="guide">안내</a>
-      <a href="#simhwa" data-tab="simhwa">심화분석지</a>
-      <a href="#trend" data-tab="trend">경향분석지</a>
-      <a href="#prompt" data-tab="prompt">프롬프트</a>
-      <a href="#qna" data-tab="qna">Q&amp;A</a>
-    </nav>
-    <span class="ver" id="verPill" title="현재 버전"></span>
+<aside class="nav" id="nav" aria-label="메뉴">
+  <a class="brand" href="#guide" aria-label="안내로 가기">
+    <span class="mark" aria-hidden="true">A</span>
+    <span class="bt lbl"><b>에이닷 내신 분석실</b><small>세종아름지점</small></span>
+  </a>
+  <nav class="tabs">
+    <a href="#guide" data-tab="guide" title="안내"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg><span class="lbl">안내</span></a>
+    <a href="#simhwa" data-tab="simhwa" title="심화분석지"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 11h7M9 14.5h7M9 18h4"/></svg><span class="lbl">심화분석지</span></a>
+    <a href="#trend" data-tab="trend" title="경향분석지"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l6.5 4.5"/></svg><span class="lbl">경향분석지</span></a>
+    <a href="#prompt" data-tab="prompt" title="프롬프트"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><span class="lbl">프롬프트</span></a>
+    <a href="#qna" data-tab="qna" title="Q&amp;A"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17.2v.1"/></svg><span class="lbl">Q&amp;A</span></a>
+  </nav>
+  <!-- 분석지 탭에서만 보이는 도구 -->
+  <div class="navtool" id="navTool" hidden>
+    <div class="nt-h lbl"><b id="ntName"></b><span class="tv" id="ntVer"></span></div>
+    <ol class="nt-flow lbl" id="ntFlow"></ol>
+    <button type="button" class="nbtn primary" id="ntDrawer" title="단계 안내"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg><span class="lbl">단계 안내</span></button>
+    <a class="nbtn" id="ntOpen" target="_blank" rel="noopener" title="새 창에서 열기"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v6H4V6h6"/></svg><span class="lbl">새 창에서 열기</span></a>
+    <a class="nbtn" id="ntDl" title="템플릿 파일 받기"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><span class="lbl">파일 받기</span></a>
   </div>
-</header>
+  <div class="nav-f">
+    <span class="ver lbl" id="verPill" title="현재 버전"></span>
+    <button type="button" class="fold" id="navFold" aria-label="메뉴 접기" title="메뉴 접기"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+  </div>
+</aside>
 
-<main>
+<main class="main" id="main">
 
   <!-- ───────── 안내 ───────── -->
   <section class="view" id="view-guide" hidden>
@@ -72,26 +82,10 @@
 
   <!-- ───────── 심화분석지 / 경향분석지 (템플릿을 그대로 띄움) ───────── -->
   <section class="view tool" id="view-simhwa" data-tool="simhwa" hidden>
-    <div class="toolbar">
-      <div class="tb-l"><b>심화분석지</b><span class="tv" data-ver="simhwa"></span><span class="hint">붙여넣기 → ① 데이터 확인 → ② 검수 → 문항 평가 → 저장</span></div>
-      <div class="tb-r">
-        <button type="button" class="tbtn primary" data-drawer="simhwa">단계 안내</button>
-        <a class="tbtn" data-open="simhwa" target="_blank" rel="noopener">새 창에서 열기</a>
-        <a class="tbtn" data-dl="simhwa">파일 받기</a>
-      </div>
-    </div>
     <div class="stage"><iframe title="심화분석지 템플릿" data-frame="simhwa"></iframe></div>
   </section>
 
   <section class="view tool" id="view-trend" data-tool="trend" hidden>
-    <div class="toolbar">
-      <div class="tb-l"><b>경향분석지</b><span class="tv" data-ver="trend"></span><span class="hint">강사: 검수완료 심화분석지 불러오기 → 총평 두 칸 → 저장 → 인쇄</span></div>
-      <div class="tb-r">
-        <button type="button" class="tbtn primary" data-drawer="trend">단계 안내</button>
-        <a class="tbtn" data-open="trend" target="_blank" rel="noopener">새 창에서 열기</a>
-        <a class="tbtn" data-dl="trend">파일 받기</a>
-      </div>
-    </div>
     <div class="stage"><iframe title="경향분석지 템플릿" data-frame="trend"></iframe></div>
   </section>
 

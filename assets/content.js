@@ -11,9 +11,9 @@ window.HUB = {
   /* 버전: 템플릿 파일을 바꾸면 여기 숫자도 같이 올립니다.
      (iframe 주소 뒤에 붙어 브라우저가 옛 파일을 쓰지 않게 합니다) */
   version: {
-    label: "v3.13",
+    label: "v3.14",
     date: "2026.10.29",
-    simhwa: { file: "tools/simhwa.html", ver: "3.11" },
+    simhwa: { file: "tools/simhwa.html", ver: "3.12" },
     trend:  { file: "tools/trend.html",  ver: "3.10" },
     prompt: { file: "downloads/내신심화분석지_프롬프트_v3.9.txt", ver: "3.9" }
   },
