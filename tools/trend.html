@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.10
+  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.11
+  (v3.11 · 2026.10.29: 심화분석지 v3.12와 같은 화면 배치 — 위쪽 도구 줄 한 줄, 오른쪽 칸에 확인 패널 + '총평 쓰기'(한 줄 요약·등급컷·특징·대비법). 오른쪽 칸에 쓰면 왼쪽 분석지에 바로 반영)
   (v3.10 · 2026.10.28: 출처 분류 교과서·모의고사·부교재·유인물·쌩외부지문·미확인 · 심화분석지 v3.9와 짝, 예전 '외부지문'은 '쌩외부지문'으로 집계)
   (v3.9 · 2026.10.28: 조교 단계 삭제에 맞춰 '조교 확인 전' 경고 삭제 · 심화분석지 v3.7과 짝)
   (v3.8 · 2026.10.28: 객관식 정답 분포 삭제, 총평을 등급컷(1·2등급+한 줄 평)·특징·대비법(각각 요약/객관식/주관식)으로 개편)
@@ -126,7 +127,7 @@
   .warnp{font-size:10.5px;color:#9A6A00;margin-top:8px}
 
   /* 화면 전용 */
-  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 20px;font-size:13px}
+  .toolbar{position:sticky;top:0;z-index:5;background:#1E3A5F;color:#fff;display:flex;align-items:center;gap:10px;padding:6px 16px;font-size:13px}
   .toolbar .p{margin-right:auto}
   .toolbar button{font:inherit;font-size:13px;border:1px solid #fff;background:transparent;color:#fff;border-radius:5px;padding:4px 12px;cursor:pointer}
   .toolbar button.main{background:#fff;color:#1E3A5F;font-weight:700}
@@ -144,7 +145,8 @@
 
   @media print{
     html,body{background:#fff}
-    .toolbar,.panel,.edit-hint{display:none!important}
+    .toolbar,.panel,.edit-hint,.side{display:none!important}
+    .mainwrap{margin-right:0!important}
     .sheet{width:auto;margin:0;padding:0 13mm}
     .topbar{margin:0 -13mm}
     .ce{border:0;padding:0;min-height:0}
@@ -156,6 +158,29 @@
     .blank i{display:block;height:7mm;border-bottom:1px dotted #9AA3AF}
   }
   @media screen and (max-width:860px){ .panel,.sheet{width:auto;margin-left:8px;margin-right:8px} .sb{grid-template-columns:1fr;justify-items:center} .sb > :last-child{width:100%} .rv{grid-template-columns:1fr} .cutband{grid-template-columns:1fr} .cutband > div + div{border-left:0;border-top:1px solid #CFD8E5;padding-top:8px;margin-top:8px} .topbar{margin:0 -46px} }
+
+  /* ───────── v3.11 오른쪽 칸: 확인 패널 + 총평 쓰기 (화면 전용) ───────── */
+  :root{ --sideW:380px; --tbH:41px; }
+  .side{position:fixed;top:var(--tbH);right:0;bottom:0;width:var(--sideW);background:#F4F6F9;border-left:1px solid var(--line);overflow-y:auto;z-index:4;padding:14px 14px 40px;display:flex;flex-direction:column;gap:12px}
+  body:not(.side-on) .side{display:none}
+  body.side-on .mainwrap{margin-right:var(--sideW)}
+  .side .panel{width:auto;margin:0;padding:12px 14px}
+  .toolbar #btnSide{border-style:dashed}
+  .toolbar button{white-space:nowrap;flex:none}
+  .toolbar .p{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wform{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+  .wform h2{margin:0;font-size:14px;color:#1E3A5F} .wform h2 small{font-weight:400;color:var(--faint);margin-left:6px;font-size:11.5px}
+  .wform h3{margin:4px 0 0;font-size:13px;color:#1E3A5F;border-top:1px solid #E3E8EE;padding-top:10px}
+  .wf{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--sub)}
+  .wf input,.wf textarea{font:inherit;font-size:12.5px;color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5px 7px;background:#fff;width:100%;resize:vertical;line-height:1.55}
+  .wf input:focus,.wf textarea:focus{outline:2px solid #1E3A5F;outline-offset:-1px}
+  .wcut{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .wf .auto{align-self:flex-start;font:inherit;font-size:11.5px;border:0;background:none;color:#1E3A5F;text-decoration:underline;padding:0;cursor:pointer}
+  .wnote{margin:0;font-size:11.5px;color:var(--faint);line-height:1.5}
+  .flash{animation:flash 1.4s ease-out}
+  @keyframes flash{0%{box-shadow:0 0 0 4px #F5C542}100%{box-shadow:0 0 0 4px transparent}}
+  @media (max-width:1200px){ body.side-on .mainwrap{margin-right:0} .side{box-shadow:-8px 0 20px rgba(20,30,45,.18)} }
+  @media (max-width:860px){ :root{ --sideW:100vw; } }
 </style>
 </head>
 <body>
@@ -166,10 +191,11 @@
   <button type="button" id="btnLoad">심화분석지 불러오기</button><input type="file" id="fileIn" accept=".html,.htm,.json" hidden>
   <button type="button" id="btnSave">저장</button>
   <button type="button" class="main" id="btnPrint">인쇄</button>
+  <button type="button" id="btnSide">오른쪽 칸 닫기</button>
 </div>
-<div class="panel" id="panel"></div>
+<aside class="side" id="side"><div class="panel" id="panel"></div><div id="wform"></div></aside>
 
-<div class="sheet"><div id="app"></div></div>
+<div class="mainwrap"><div class="sheet"><div id="app"></div></div></div>
 
 <!-- 데이터: 직접 고치지 않습니다. [심화분석지 불러오기]와 [저장]으로만 바뀝니다. -->
 <script type="application/json" id="data">
@@ -278,7 +304,7 @@
     $('progress').textContent = !rows.length ? '심화분석지 저장 파일을 불러와 시작하세요' :
       `${m.school||''} ${m.grade||''} ${m.exam||''} · 문항 ${rows.length}개 · 확인 필요 ${bad}`;
     $('btnSave').disabled = !rows.length;
-    if(!rows.length){ app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[심화분석지 불러오기]를 눌러 강사 검수를 마친 심화분석지 파일<br>(…_심화분석_검수완료.html)을 고르거나, 이 화면에 끌어다 놓으세요.</div>`; return; }
+    if(!rows.length){ $('wform').innerHTML = ''; formFor = null; app.innerHTML = `<div class="empty">아직 데이터가 없습니다.<br>[심화분석지 불러오기]를 눌러 강사 검수를 마친 심화분석지 파일<br>(…_심화분석_검수완료.html)을 고르거나, 이 화면에 끌어다 놓으세요.</div>`; return; }
 
     const N = rows.length, total = r1(rows.reduce((s,r)=>s+r.pts,0));
     const subj = rows.filter(r=>isSubj(r.no)), obj = rows.filter(r=>!isSubj(r.no));
@@ -384,7 +410,68 @@
           ${s01}${s02}${s03}${s04}${s05}
         </td></tr></tbody>
       </table>`;
+    buildForm(subj.length>0, auto);
   }
+
+  /* ── v3.11 총평 쓰기 (오른쪽 칸): 쓰는 대로 왼쪽 분석지에 반영 ── */
+  let formFor = null, tmr = null;
+  const FIELDS = (hasSubj) => [
+    ['h','한 줄 요약','요약 카드 아래 굵은 한 줄'],
+    ['headline','한 줄 요약','', 'input'],
+    ['h','등급컷','성적이 나오면 적기 · 비우면 인쇄본에 빈칸'],
+    ['cut','',''],
+    ['cutNote','등급컷 한 줄 평','예: 전반적으로 어려운 시험이었습니다.','input'],
+    ['h','특징',''],
+    ['featLead','요약 한 줄','예: 지문 변형이 매우 많았던 시험입니다.','input'],
+    ['featObj','객관식','예: 원문 암기보다 바뀐 지문의 이해가 중요했습니다.','ta'],
+    ...(hasSubj?[['featSubj','주관식','예: 단어 형태·철자, 부분점수 유무, 답안 조건','ta']]:[]),
+    ['h','대비법',''],
+    ['prepLead','요약 한 줄','예: 원문 이해와 변형 지문 연습이 필요합니다.','input'],
+    ['prepObj','객관식','예: 원문과 변형 지문을 비교하며 달라진 내용을 확인해야 합니다.','ta'],
+    ...(hasSubj?[['prepSubj','주관식','예: 핵심 단어를 직접 쓰며 형태·철자를 확인해야 합니다.','ta']]:[])
+  ];
+  function buildForm(hasSubj, auto){
+    const key = examKey(D)+'|'+hasSubj;
+    if(formFor===key){ syncForm(auto); return; }
+    formFor = key; const T = D.meta.trend||{};
+    const f = (k, label, ph, kind) => `<label class="wf"><span>${label}</span>${kind==='ta'
+      ? `<textarea data-w="${k}" rows="4" placeholder="${esc(ph)}">${esc(T[k]||'')}</textarea>`
+      : `<input data-w="${k}" value="${esc(T[k]||'')}" placeholder="${esc(ph)}">`}</label>`;
+    let h = `<div class="wform"><h2>총평 쓰기<small>쓰는 대로 왼쪽 분석지에 반영 · 저장은 위쪽 [저장]</small></h2>`;
+    FIELDS(hasSubj).forEach(([k,label,ph,kind]) => {
+      if(k==='h'){ h += `<h3>${label}${ph?` <small style="font-weight:400;color:var(--faint);font-size:11px">${esc(ph)}</small>`:''}</h3>`; return; }
+      if(k==='cut'){ h += `<div class="wcut">${[1,2].map(i=>`<label class="wf"><span>${i}등급 (점)</span><input data-w="cut${i}" inputmode="decimal" value="${esc(T['cut'+i]||'')}" placeholder="예: ${i===1?'92':'84'}"></label>`).join('')}</div>`; return; }
+      if(k==='headline'){ h += `<label class="wf"><span>비우면 자동 문장</span><input data-w="headline" value="${esc(T.headline||'')}" placeholder="${esc(auto)}"></label>`; return; }
+      h += f(k, label, ph, kind); });
+    h += `<p class="wnote">왼쪽 분석지의 칸을 눌러 직접 써도 됩니다. 비운 칸은 인쇄본에 손글씨 줄로 나옵니다.</p></div>`;
+    $('wform').innerHTML = h;
+  }
+  function syncForm(auto){ const T = D.meta.trend||{};
+    $('wform').querySelectorAll('[data-w]').forEach(el => { if(el===document.activeElement) return; el.value = T[el.dataset.w]||''; if(el.dataset.w==='headline') el.placeholder = auto; }); }
+  const normW = (k, t) => { t = String(t||'');
+    if(k==='headline' || k==='cutNote' || /Lead$/.test(k)) t = t.replace(/\s*\n\s*/g,' ');
+    if(/^cut\d$/.test(k)) t = t.replace(/\s+/g,'').replace(/점(이상)?$/,'');
+    return t.replace(/\n{3,}/g,'\n\n'); };
+  $('wform').addEventListener('input', ev => { const k = ev.target.dataset.w; if(!k) return;
+    const T = D.meta.trend = D.meta.trend||{}; T[k] = normW(k, ev.target.value); dirty = true;
+    clearTimeout(tmr); tmr = setTimeout(()=>{ const y = window.scrollY; render(); window.scrollTo(0,y); }, 250); });
+  $('wform').addEventListener('change', ev => { const k = ev.target.dataset.w; if(!k) return; const T = D.meta.trend||{}; T[k] = (T[k]||'').trim(); });
+  /* 칸에 들어가면 왼쪽 분석지의 같은 자리로 이동 */
+  $('wform').addEventListener('focusin', ev => { const k = ev.target.dataset.w; if(!k) return;
+    const el = app.querySelector(`[data-k="${k}"]`); if(!el) return;
+    const r = el.getBoundingClientRect(); if(r.top < 60 || r.bottom > window.innerHeight-20) el.scrollIntoView({behavior:'smooth', block:'center'});
+    const box = el.closest('.rbox,.cutband') || el; box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash'); });
+
+  /* 오른쪽 칸 열기·닫기 (넓은 화면은 기본으로 열림) */
+  const SKEY = 'adot-trend-side';
+  function setSide(on, remember){ document.body.classList.toggle('side-on', on); $('btnSide').textContent = on ? '오른쪽 칸 닫기' : '오른쪽 칸 열기';
+    if(remember){ try{ localStorage.setItem(SKEY, on?'1':'0'); }catch(e){} } }
+  $('btnSide').onclick = () => setSide(!document.body.classList.contains('side-on'), true);
+  const tbH = () => document.documentElement.style.setProperty('--tbH', document.querySelector('.toolbar').offsetHeight+'px');
+  window.addEventListener('resize', tbH);
+  (()=>{ let pref = null; try{ pref = localStorage.getItem(SKEY); }catch(e){}
+    setSide(pref==null ? window.innerWidth>=1200 : pref==='1'); tbH();
+    if(pref==null) window.addEventListener('resize', () => { let p2 = null; try{ p2 = localStorage.getItem(SKEY); }catch(e){} if(p2==null) setSide(window.innerWidth>=1200); }); })();
 
 
   /* ── 확인 패널 (화면 전용) ── */
@@ -461,7 +548,8 @@
     const name = [m.school,m.grade,m.exam].filter(Boolean).join('_').replace(/\s+/g,'_') + '_경향분석.html';
     m.trendFile = name;
     const clone = document.documentElement.cloneNode(true);
-    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = '';
+    clone.querySelector('#app').innerHTML = ''; clone.querySelector('#panel').innerHTML = ''; clone.querySelector('#wform').innerHTML = '';
+    clone.querySelector('body').classList.remove('side-on');
     clone.querySelector('body').classList.remove('drop');
     clone.querySelector('#data').textContent = '\n' + JSON.stringify(D, null, 1).replace(/<\//g,'<\\/') + '\n';
     const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type:'text/html'});
