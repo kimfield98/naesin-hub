@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!--
-  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.11
+  에이닷 영어학원 세종아름지점 · 내신 경향분석지 템플릿 v3.12
+  (v3.12 · 2026.10.30: 변형률 계산을 심화분석지 v3.13과 같게 — 짧은 원문 조각 보완 + 강사가 고친 형광펜 반영)
   (v3.11 · 2026.10.29: 심화분석지 v3.12와 같은 화면 배치 — 위쪽 도구 줄 한 줄, 오른쪽 칸에 확인 패널 + '총평 쓰기'(한 줄 요약·등급컷·특징·대비법). 오른쪽 칸에 쓰면 왼쪽 분석지에 바로 반영)
   (v3.10 · 2026.10.28: 출처 분류 교과서·모의고사·부교재·유인물·쌩외부지문·미확인 · 심화분석지 v3.9와 짝, 예전 '외부지문'은 '쌩외부지문'으로 집계)
   (v3.9 · 2026.10.28: 조교 단계 삭제에 맞춰 '조교 확인 전' 경고 삭제 · 심화분석지 v3.7과 짝)
@@ -18,7 +19,7 @@
   4. [인쇄] 또는 Ctrl+P / Cmd+P → 설정 변경 없이 그대로 인쇄 (보통 2쪽, 양면 인쇄 기준)
 
   자동 계산(심화분석지와 같은 고정 공식, 사람이 고치지 않음)
-  - 변형률: 시험 지문 단어 중 '원문에 같은 연속 3단어가 없는 단어'의 비율
+  - 변형률: 심화분석지 v3.13의 형광펜 단어 수 ÷ 시험 지문 전체 단어 수 (강사가 고친 형광펜 반영, 심화분석지 화면 숫자와 같음)
   - 변형 정도: 없음 5% 미만 · 하 5~25% · 중 25~75% · 상 75% 이상
   - 숫자가 이상하면 이 파일이 아니라 심화분석지에서 고친 뒤 다시 불러옵니다.
   디자인·계산 코드는 수정하지 않습니다.
@@ -224,7 +225,14 @@
   const qShort = no => isSubj(no) ? `서${String(no).replace(/^서[답술]형?\s*/,'')}` : String(no);
   const r1 = x => Math.round(x*10)/10;
 
-  /* ── 변형률 계산: 심화분석지 v3.5와 같은 고정 공식 (수정 금지) ── */
+  /* ── 변형률·형광펜 계산 v2 (심화분석지 v3.13 · 경향분석지 v3.12 공통 고정 공식, 수정 금지) ──────────
+     ① 3단어 규칙: 시험 지문의 단어를 포함한 연속 3단어가 원문에 그대로 있으면 '원문 단어'.
+     ② 짧은 원문 조각 보완: 원문과 시험지를 단어 순서대로 맞춰 본 뒤(최장 공통 부분열),
+        바뀐 단어 사이에 낀 1~2단어 원문 조각도 '원문 단어'로 본다.
+        조건: 조각 앞뒤의 바뀐 부분이 각각 3단어 이하이고, 한쪽이 지문 끝이거나 ①로 확인된 원문 단어에 붙어 있을 것.
+     ③ 강사 조정: 강사가 형광펜을 추가(+)·삭제(-)·자동으로 되돌리기(0)한 단어는 그 결과를 따른다 (나중에 한 것이 우선).
+     형광펜 = ①②로 찾은 새 단어 + ③ 조정.  변형률 = 형광펜 단어 수 ÷ 시험 지문 전체 단어 수.
+     (A)·ⓐ·① 같은 기호와 빈칸 밑줄은 세지 않는다.                                                            */
   const WORD = /[A-Za-z]+(?:['’][A-Za-z]+)*/g;
   const blankLabels = s => String(s||'').replace(/\(\s*[A-Ea-e]\s*\)/g, m => ' '.repeat(m.length));
   function toks(s){ const out=[]; let m; const c = blankLabels(s); WORD.lastIndex=0;
@@ -233,15 +241,82 @@
   function grams(t){ const g=new Set(); for(let i=0;i+2<t.length;i++) g.add(t[i].w+' '+t[i+1].w+' '+t[i+2].w); return g; }
   function cover(t, g){ return t.map((_,i)=>{ for(let k=i-2;k<=i;k++){ if(k<0||k+2>=t.length) continue;
       if(g.has(t[k].w+' '+t[k+1].w+' '+t[k+2].w)) return true; } return false; }); }
-  function analyze(exam, orig){
-    if(!orig || !String(orig).trim() || !exam) return null;
-    const te = toks(exam), to = toks(orig); if(te.length<3) return null;
-    const cov = cover(te, grams(to)), newN = cov.filter(c=>!c).length;
-    return { rate: Math.round(newN/te.length*100) };
+  const GAP = 3;
+  const lcsMemo = new Map();
+  function lcsPairs(te, to){
+    const key = te.map(t=>t.w).join(' ') + '\u0000' + to.map(t=>t.w).join(' ');
+    if(lcsMemo.has(key)) return lcsMemo.get(key);
+    const n = te.length, m = to.length, W = m+1, L = new Uint16Array((n+1)*W);
+    for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--)
+      L[i*W+j] = te[i].w===to[j].w ? L[(i+1)*W+j+1]+1 : Math.max(L[(i+1)*W+j], L[i*W+j+1]);
+    const pairs = []; let i=0, j=0;
+    while(i<n && j<m){
+      if(te[i].w===to[j].w && L[i*W+j]===L[(i+1)*W+j+1]+1){ pairs.push([i,j]); i++; j++; }
+      else if(L[(i+1)*W+j] >= L[i*W+j+1]) i++; else j++; }
+    if(lcsMemo.size>300) lcsMemo.clear(); lcsMemo.set(key, pairs); return pairs; }
+  function shortFill(te, to, cov){
+    const ext = cov.slice(), usedO = new Set(), B = [];
+    lcsPairs(te, to).forEach(([i,j]) => { const b = B[B.length-1];
+      if(b && b.e===i && b.oe===j){ b.e++; b.oe++; } else B.push({s:i, e:i+1, os:j, oe:j+1}); });
+    B.forEach((b,k) => {
+      if(b.e-b.s > 2) return;                                   // 3단어 이상은 ①에서 이미 확인됨
+      let all = true; for(let x=b.s;x<b.e;x++) if(!cov[x]) all = false; if(all) return;
+      const P = B[k-1], N = B[k+1];
+      const gL = b.s - (P ? P.e : 0), gR = (N ? N.s : te.length) - b.e;
+      if(gL>GAP || gR>GAP) return;
+      if(P && gL>0 && b.os-P.oe > gL+GAP) return;               // 원문 쪽도 비슷한 길이가 바뀐 자리여야 함
+      if(N && gR>0 && N.os-b.oe > gR+GAP) return;
+      const solidL = !P || cov[P.e-1], solidR = !N || cov[N.s];
+      if(!(solidL || solidR)) return;
+      for(let x=b.s;x<b.e;x++) ext[x] = true; for(let y=b.os;y<b.oe;y++) usedO.add(y);
+    });
+    return {ext, usedO}; }
+  /* 표시 기호([[ ]], ** **, n|)를 뺀 글자와 원래 위치 */
+  function plainMap(s){ const plain=[], map=[]; let i=0;
+    while(i<s.length){
+      if(s.startsWith('[[',i)||s.startsWith(']]',i)){ i+=2; continue; }
+      if(s.startsWith('**',i)){ const opening = (s.slice(0,i).match(/\*\*/g)||[]).length%2===0; i+=2; const m = s.slice(i).match(/^([\w가-힣]+)\|/); if(opening && m) i+=m[0].length; continue; }
+      plain.push(s[i]); map.push(i); i++; }
+    return {plain: plain.join(''), map}; }
+  const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const normWS = x => String(x||'').replace(/\s+/g,' ').trim();
+  /* 지문의 줄(빈 줄 제외) 위치: n번째 줄 = 화면의 n번째 문장 줄 */
+  function lineSpans(s){ const out=[]; let pos=0;
+    String(s).split('\n').forEach(raw => { const t = raw.trim(); if(t){ const a = pos + raw.indexOf(t); out.push({a, b:a+t.length}); } pos += raw.length+1; });
+    return out; }
+  /* 강사 조정 하나({op,t,ln,at}) → 지문 글자 범위. 같은 줄에서 at에 가장 가까운 같은 글자를 찾음 (지문을 고쳐 못 찾으면 무시) */
+  function opRange(s, L, o){
+    const ln = L[o.ln], want = normWS(o.t); if(!ln || !want) return null;
+    const line = s.slice(ln.a, ln.b), pm = plainMap(line), re = new RegExp(reEsc(want).replace(/ /g,'\\s+'),'g'); let m, best = null;
+    while((m=re.exec(pm.plain))){ if(!m[0].length){ re.lastIndex++; continue; }
+      if(!best || Math.abs(m.index-(o.at||0)) < Math.abs(best.i-(o.at||0))) best = {i:m.index, n:m[0].length}; }
+    return best ? [ln.a + pm.map[best.i], ln.a + pm.map[best.i+best.n-1] + 1] : null; }
+  /* v3.10~3.12에서 추가한 형광펜(문자열): 지문 전체에서 같은 글자를 모두 찾음 */
+  function legacyRanges(s, list){ const out = [], {plain, map} = plainMap(s);
+    (list||[]).forEach(ph => { const q = String(ph).trim(); if(!q) return; const re = new RegExp(reEsc(q).replace(/\s+/g,'\\s+'),'g'); let m;
+      while((m=re.exec(plain))){ if(!m[0].length){ re.lastIndex++; continue; } out.push([map[m.index], map[m.index+m[0].length-1]+1]); } });
+    return out; }
+  /* st: 단어마다 0 원문 · 1 자동 형광펜 · 2 강사가 추가 · 3 강사가 지움(자동 형광펜이었던 단어)
+     force = 원문이 없어도 강사 조정만으로 표시(보기 상자 등) */
+  function analyze(exam, orig, adj, force){
+    const noOrig = !orig || !String(orig).trim();
+    if(!exam || (noOrig && !force)) return null;
+    const s = String(exam), te = toks(s), to = noOrig ? [] : toks(orig);
+    if(te.length<3 && !force) return null;
+    const cov = noOrig ? te.map(()=>true) : cover(te, grams(to)), f = noOrig ? {ext:cov, usedO:new Set()} : shortFill(te, to, cov);
+    const auto = f.ext.map(c=>!c), st = auto.map(x=>x?1:0);
+    const put = (r, op) => { if(!r) return; te.forEach((t,k) => { if(t.a<r[1] && t.b>r[0]) st[k] = op==='+' ? 2 : op==='-' ? (auto[k]?3:0) : (auto[k]?1:0); }); };
+    if(adj){ legacyRanges(s, adj.legacy).forEach(r=>put(r,'+')); const L = lineSpans(s); (adj.ops||[]).forEach(o=>put(opRange(s,L,o), o.op)); }
+    const newN = st.filter(v=>v===1||v===2).length;
+    return { rate: te.length ? Math.round(newN/te.length*100) : 0, te, to, st, adjusted: st.some(v=>v>=2),
+             used: noOrig ? [] : cover(to, grams(te)).map((u,k)=>u||f.usedO.has(k)) };
   }
+  /* 문항의 강사 조정: 문항 전용 지문이면 문항에, 공유 지문이면 묶음(groups)에 저장됨 */
+  const adjOf = (o, f) => o ? {legacy: (o.hl||{})[f]||[], ops: (o.hlOps||{})[f]||[]} : null;
+  function passAdj(it){ if(it.passage) return adjOf(it,'passage'); const g = it.group && D.groups ? D.groups[it.group] : null; return adjOf(g,'passage'); }
   function origOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.original || (g && g.original) || ''; }
   function examOf(it){ const g = it.group && D.groups ? D.groups[it.group] : null; return it.passage || (g && g.passage) || ''; }
-  function varOf(it){ const a = analyze(examOf(it), origOf(it)); return a ? {rate:a.rate, level:LEVEL(a.rate)} : null; }
+  function varOf(it){ const a = analyze(examOf(it), origOf(it), passAdj(it)); return a ? {rate:a.rate, level:LEVEL(a.rate)} : null; }
 
   /* ── 출처 세부: 출처 상세 글에서 단원만 뽑음 ── */
   function unitOf(s){ const d = String(s.detail||''); let m;
